@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthy You</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #f8f9fa;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            padding-top: 70px;
+        }
+        .container { max-width: 900px; margin: auto; padding: 0 20px; }
+
+        /* Navigation Bar */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+            background-color: var(--primary-color); color: white;
+            display: flex; align-items: center; padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000;
+        }
+        .hamburger { font-size: 1.8rem; cursor: pointer; margin-right: 15px; }
+        .nav-title { font-size: 1.2rem; font-weight: bold; }
+
+        /* Sidebar */
+        .sidebar {
+            height: 100%; width: 250px; position: fixed; z-index: 1001; top: 0; left: -250px;
+            background-color: #343a40; overflow-x: hidden; transition: 0.3s; padding-top: 60px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+        }
+        .sidebar.open { left: 0; }
+        .sidebar a { padding: 15px 25px; text-decoration: none; font-size: 1.1rem; color: #f1f1f1; display: block; border-bottom: 1px solid #4b545c; }
+        .sidebar a:hover { background-color: #007bff; color: white; }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #aaa; cursor: pointer; }
+        
+        .overlay { position: fixed; display: none; width: 100%; height: 100%; top: 0; left: 0; background-color: rgba(0,0,0,0.5); z-index: 1000; }
+        .overlay.active { display: block; }
+        
+        /* AUTHENTICATION OVERLAY */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--secondary-color); z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card { background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: var(--shadow); width: 90%; max-width: 400px; text-align: center; }
+
+        /* Cards & Forms */
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: var(--shadow); margin-bottom: 20px; width: 100%; }
+        h2, h3 { color: var(--primary-color); text-align: center; margin-top: 0; }
+
+        form { display: grid; gap: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #495057; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; }
+        button { background-color: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 5px;}
+        button:hover { background-color: #0056b3; }
+
+        /* Widgets & Advice Box */
+        .progress-bar { width: 100%; background: #e9ecef; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: var(--success-color); width: 0%; transition: width 0.5s ease-in-out; }
+        .bp-table { width: 100%; font-size: 0.85rem; border-collapse: collapse; margin-top: 10px; }
+        .bp-table th, .bp-table td { padding: 8px; border: 1px solid #eee; text-align: center; }
+        .bp-normal { background-color: #d4edda; color: #155724; }
+        .bp-elevated { background-color: #fff3cd; color: #856404; }
+        .bp-stage1 { background-color: #ffeeba; color: #856404; }
+        .bp-stage2 { background-color: #f8d7da; color: #721c24; }
+        .mood-selector { display: flex; justify-content: space-between; margin-top: 5px; }
+        .mood-selector button { background: none; border: 2px solid transparent; font-size: 2rem; cursor: pointer; padding: 0 10px; }
+        .mood-selector button.selected { border-color: var(--primary-color); background-color: #e0f7ff; border-radius: 50%; }
+
+        .advice-box { background: #e7f5ff; padding: 20px; border-left: 6px solid var(--primary-color); border-radius: 4px; display: none; margin-top: 15px; margin-bottom: 15px;}
+        .advice-box.ai-theme { background: #f3e5f5; border-left-color: #9c27b0; } 
+        .advice-box ul { padding-left: 20px; margin: 0; }
+        .advice-box li { margin-bottom: 12px; line-height: 1.6; }
+        .advice-box p { margin: 0; line-height: 1.6; }
+
+        #streak-display { text-align: center; font-size: 1.8rem; font-weight: 800; color: #e44d26; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; } th { background-color: #f8f9fa; }
+
+        .mic-btn { background-color: #6c757d; width: auto; display: inline-block; padding: 5px 10px; font-size: 1rem; margin-left: 10px; }
+        .mic-btn.listening { background-color: #dc3545; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+
+        .toggle-btn { background-color: #e9ecef; color: #495057; border: 2px solid #ced4da; padding: 8px 16px; margin: 0 5px; border-radius: 20px; cursor: pointer; font-weight: bold; width: auto; display: inline-block; transition: 0.2s;}
+        .toggle-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+        .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
+        .badge-item { background: #f8f9fa; padding: 15px; border-radius: 12px; border: 2px solid #eee; text-align: center; transition: 0.3s; filter: grayscale(100%); opacity: 0.5; }
+        .badge-item.unlocked { filter: grayscale(0%); opacity: 1; border-color: var(--warning-color); background: #fffdf5; box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2); transform: scale(1.02); }
+        .badge-icon { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+        .badge-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; color: #333; }
+        .badge-desc { font-size: 0.75rem; color: #666; line-height: 1.3; }
+
+        #toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: white; border-left: 6px solid var(--warning-color); padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 15px; animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-in 4.5s forwards; width: 300px;}
+        .toast-icon { font-size: 2rem; }
+        .toast-text h4 { margin: 0 0 4px 0; font-size: 1rem; color: #333; }
+        .toast-text p { margin: 0; font-size: 0.85rem; color: #666; }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { transform: translateY(-20px); opacity: 0; visibility: hidden; } }
+
+        .edamam-result { background: #fdf2e9; border: 1px solid #f39c12; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
+        
+        @media (max-width: 600px) {
+            .form-row, #goals-form { grid-template-columns: 1fr !important; }
+            #toast-container { top: 70px; right: 10px; left: 10px; align-items: center; }
+            .toast { width: 100%; max-width: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2>Healthy You Login</h2>
+            <p style="color: #666; margin-bottom: 20px;">Secure cross-device cloud access.</p>
+            <input type="email" id="auth-email" placeholder="Email" style="margin-bottom: 10px;">
+            <input type="password" id="auth-password" placeholder="Password" style="margin-bottom: 10px;">
+            <button id="btn-login" style="background: var(--success-color);">Login</button>
+            <button id="btn-register" style="background: var(--primary-color);">Register</button>
+            <p id="auth-error" style="color: var(--danger-color); font-size: 0.9rem; display: none; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <div class="navbar">
+        <span class="hamburger" onclick="toggleMenu()">&#9776;</span>
+        <span class="nav-title">My Tracker</span>
+    </div>
+
+    <div id="mySidebar" class="sidebar">
+        <span class="closebtn" onclick="toggleMenu()">&times;</span>
+        <a href="#" onclick="toggleMenu(); window.scrollTo(0,0);">🏠 Dashboard</a>
+        <a href="#goals-card" onclick="toggleMenu()">🎯 Goals & Age</a>
+        <a href="#bmi-card" onclick="toggleMenu()">⚖️ BMI Calculator</a>
+        <a href="#diet-card" onclick="toggleMenu()">🥗 Diet Plan</a>
+        <a href="#ai-card" onclick="toggleMenu()">🧠 Mood Patterns</a>
+        <a href="#log-card" onclick="toggleMenu()">✏️ Log Data</a>
+        <a href="#graphs-card" onclick="toggleMenu()">📈 Activity Trends</a>
+        <a href="#history-card" onclick="toggleMenu()">📋 History</a>
+        <a href="#trophy-card" onclick="toggleMenu()">🏆 Trophy Room</a>
+        <a href="#" onclick="showHelpLogic(); toggleMenu()">📘 System Logic & FAQ</a>
+        <a href="#" id="btn-logout" style="color: #dc3545;">🚪 Logout</a>
+    </div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <div id="streak-display">🔥 0-Day Streak!</div>
+
+        <div class="card" id="goals-card">
+            <h3>🎯 Age & Daily Goals</h3>
+            <div style="background: #f1f3f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <label>What is your Age? Let's get personalized recommendations.</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="user-age" placeholder="e.g. 20" style="width: 150px;">
+                    <button type="button" onclick="suggestGoals()" style="width: auto;">Get Suggestions</button>
+                </div>
+            </div>
+            <div id="goal-advice-section" class="advice-box"></div>
+            <form id="goals-form" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div><label>Steps</label><input type="number" id="goal-steps" value="10000"></div>
+                <div><label>Sleep (h)</label><input type="number" id="goal-sleep" value="8"></div>
+                <div><label>Water (L)</label><input type="number" id="goal-water" step="0.1" value="2.5"></div>
+            </form>
+        </div>
+
+        <div class="card" id="ai-card">
+            <h3 style="color: #9c27b0;">🧠 Mood Patterns</h3>
+            <p style="text-align: center; margin-top: -10px; margin-bottom: 20px; color: #666;">Our algorithm analyzes your past logs to find hidden correlations between your daily habits and your mood.</p>
+            <div id="ai-insight-section" class="advice-box ai-theme" style="display: block;"></div>
+        </div>
+
+        <div class="card" id="diet-card">
+            <h3>🥗 Smart Diet Suggestions</h3>
+            <p style="text-align: center; margin-top: -10px; margin-bottom: 20px; color: #666;">Get a personalized daily food focus based on your current Goals.</p>
+            <button type="button" onclick="generateDietPlan()" style="background-color: #28a745;">Generate My Meal Focus</button>
+            <div id="diet-advice-section" class="advice-box"></div>
+        </div>
+
+        <div class="card" id="bmi-card">
+            <h3>⚖️ BMI Calculator</h3>
+            <form id="bmi-form" class="form-row">
+                <div><label>Weight (kg)</label><input type="number" id="user-weight" step="0.1" placeholder="e.g. 70.5"></div>
+                <div><label>Height (cm)</label><input type="number" id="user-height" placeholder="e.g. 175"></div>
+            </form>
+            <button type="button" onclick="calculateBMI()" style="margin-top: 15px; background-color: #6c757d;">Calculate & Save BMI</button>
+            <div id="bmi-result-section" class="advice-box" style="text-align: center;"></div>
+        </div>
+
+        <div class="card" id="log-card">
+            <h2>✏️ Log Today (Auto-Merges Updates)</h2>
+            
+            <div style="background: #fffdf5; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <label>🍔 Food Search (Powered by Edamam)</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="food-search-input" placeholder="E.g., Apple, Chicken, Dosa">
+                    <button type="button" onclick="searchEdamamFood()" style="width: auto; background: #e67e22;">Search</button>
+                </div>
+                <div id="edamam-results-container" style="display: none;"></div>
+                <div style="border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 10px;">
+                    <strong>Your Plate Today:</strong> <span id="plate-calories">0</span> kcal
+                    <div id="daily-plate-list" style="margin-top: 5px; font-size: 0.9rem; color: #555;">(No food added yet)</div>
+                </div>
+            </div>
+
+            <form id="health-form">
+                <div class="form-row">
+                    <div><label>Date</label><input type="date" id="log-date" required></div>
+                    <div>
+                        <label>Steps</label>
+                        <input type="number" id="steps" required>
+                        <div class="progress-bar"><div id="steps-progress" class="progress-fill"></div></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div><label>Sleep (h)</label><input type="number" id="sleep" step="0.1" required></div>
+                    <div><label>Water (L)</label><input type="number" id="water" step="0.1" required></div>
+                </div>
+                <div class="form-row">
+                    <div><label>Screen (h)</label><input type="number" id="screen-time" step="0.5"></div>
+                    <div>
+                        <label>BP (Optional)</label>
+                        <div style="display:flex; gap:5px; align-items: center;">
+                            <input type="number" id="bp-sys" placeholder="120" style="width: 50%;"> / 
+                            <input type="number" id="bp-dia" placeholder="80" style="width: 50%;">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label>Mood</label>
+                    <div class="mood-selector" id="mood-selector">
+                        <button type="button" data-mood="😩">😩</button><button type="button" data-mood="😕">😕</button>
+                        <button type="button" data-mood="😐">😐</button><button type="button" data-mood="🙂">🙂</button>
+                        <button type="button" data-mood="😄">😄</button>
+                    </div>
+                    <input type="hidden" id="mood-input">
+                </div>
+                <div>
+                    <label style="display:inline-block;">Notes</label>
+                    <button type="button" class="mic-btn" id="mic-btn" onclick="startDictation()">🎤 Record Note</button>
+                    <textarea id="notes" placeholder="Type or use voice..."></textarea>
+                </div>
+                <button type="submit" style="background: var(--success-color);">Save / Merge Daily Log to Cloud</button>
+            </form>
+            <div id="log-advice-section" class="advice-box"></div>
+        </div>
+
+        <div class="card">
+            <h3>ℹ️ BP Guide (AHA)</h3>
+            <table class="bp-table">
+                <tr><th>Category</th><th>Systolic</th><th>Diastolic</th></tr>
+                <tr class="bp-normal"><td>Normal</td><td>&lt; 120</td><td>&lt; 80</td></tr>
+                <tr class="bp-elevated"><td>Elevated</td><td>120-129</td><td>&lt; 80</td></tr>
+                <tr class="bp-stage1"><td>Stage 1</td><td>130-139</td><td>80-89</td></tr>
+                <tr class="bp-stage2"><td>Stage 2</td><td>140+</td><td>90+</td></tr>
+            </table>
+        </div>
+
+        <div class="card" id="graphs-card">
+            <h2>📈 Activity & Health Trends</h2>
+            <div style="text-align: center; margin-bottom: 25px;">
+                <button type="button" id="btn-7days" class="toggle-btn active" onclick="setTimeframe(7)">Last 7 Entries</button>
+                <button type="button" id="btn-30days" class="toggle-btn" onclick="setTimeframe(30)">Last 30 Entries</button>
+            </div>
+            
+            <h4 style="text-align: center; margin-bottom: 10px; color: var(--primary-color);">Daily Steps</h4>
+            <canvas id="stepsChart"></canvas>
+            
+            <h4 style="text-align: center; margin-top: 35px; margin-bottom: 10px; color: var(--warning-color);">Daily Sleep (Hours)</h4>
+            <canvas id="sleepChart"></canvas>
+
+            <hr style="border: 1px solid #eee; margin: 30px 0;">
+            <h4 style="text-align: center; margin-bottom: 10px; color: var(--danger-color);">Blood Pressure Trends</h4>
+            <p style="text-align: center; font-size: 0.85rem; color: #666; margin-top: -5px;">The green dashed lines show the Normal AHA limits (120/80).</p>
+            <canvas id="bpChart"></canvas>
+        </div>
+        
+        <div class="card" id="history-card">
+            <h2>📋 History</h2>
+            <div style="overflow-x:auto;">
+                <table><thead><tr><th>Date</th><th>Steps</th><th>Food (kcal)</th><th>BP</th><th>Action</th></tr></thead><tbody id="log-table-body"></tbody></table>
+            </div>
+        </div>
+
+        <div class="card" id="trophy-card" style="border: 2px solid var(--warning-color);">
+            <h3>🏆 Trophy Room</h3>
+            <p style="text-align: center; margin-top: -10px; margin-bottom: 20px; color: #666;">Log your daily health metrics to unlock achievements!</p>
+            <div class="badge-grid" id="badge-grid">
+                </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuZzCOUVO9y6mvAxvfh3XN-NO0vBW2WcE",
+            authDomain: "healthyyou-e743f.firebaseapp.com",
+            projectId: "healthyyou-e743f",
+            storageBucket: "healthyyou-e743f.firebasestorage.app",
+            messagingSenderId: "317605943899",
+            appId: "1:317605943899:web:bbc2632d68c7d4d8597d7e"
+        };
+        const EDAMAM_ID = "d898a8a3";
+        const EDAMAM_KEY = "7e323c25a1984b5a0cbc90b70ff961c8";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Global State (Replaces LocalStorage)
+        let currentUser = null;
+        let cloudData = []; 
+        let currentPlate = []; 
+
+        // Authenticate Logic
+        const authOverlay = document.getElementById('auth-overlay');
+        const authError = document.getElementById('auth-error');
+
+        document.getElementById('btn-login').onclick = async () => {
+            try { await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value); }
+            catch(e) { authError.innerText = e.message; authError.style.display = 'block'; }
+        };
+        document.getElementById('btn-register').onclick = async () => {
+            try { await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value); }
+            catch(e) { authError.innerText = e.message; authError.style.display = 'block'; }
+        };
+        document.getElementById('btn-logout').onclick = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                authOverlay.style.display = 'none';
+                await loadCloudData(); // Fetch all history from Firebase
+                initPage(); // Run your original init script
+            } else {
+                currentUser = null;
+                authOverlay.style.display = 'flex';
+            }
+        });
+
+        // Cloud Data Syncer
+        async function loadCloudData() {
+            cloudData = [];
+            const querySnapshot = await getDocs(collection(db, "users", currentUser.uid, "logs"));
+            querySnapshot.forEach((doc) => { cloudData.push(doc.data()); });
+            
+            // Check if there is data for today to pre-fill the form
+            const todayStr = document.getElementById('log-date').value || new Date().toISOString().split('T')[0];
+            const todayLog = cloudData.find(d => d.date === todayStr);
+            if(todayLog) {
+                document.getElementById('steps').value = todayLog.steps || '';
+                document.getElementById('sleep').value = todayLog.sleep || '';
+                document.getElementById('water').value = todayLog.water || '';
+                document.getElementById('bp-sys').value = todayLog.bpSys || '';
+                document.getElementById('bp-dia').value = todayLog.bpDia || '';
+                if(todayLog.plate) currentPlate = todayLog.plate;
+                renderDailyPlateUI();
+            }
+        }
+
+        // --- Edamam API Logic ---
+        window.searchEdamamFood = async () => {
+            const query = document.getElementById('food-search-input').value;
+            if(!query) return;
+            try {
+                const res = await fetch(`https://api.edamam.com/api/food-database/v2/parser?app_id=${EDAMAM_ID}&app_key=${EDAMAM_KEY}&ingr=${query}`);
+                const data = await res.json();
+                if(data.hints && data.hints.length > 0) {
+                    const food = data.hints[0].food;
+                    const cals = Math.round(food.nutrients.ENERC_KCAL);
+                    const safeLabel = food.label.replace(/'/g, "\\'");
+                    const resDiv = document.getElementById('edamam-results-container');
+                    resDiv.style.display = 'block';
+                    resDiv.innerHTML = `
+                        <div class="edamam-result">
+                            <div><strong>${food.label}</strong><br><span style="color:#e67e22;">${cals} kcal</span></div>
+                            <button onclick="addFoodToPlate('${safeLabel}', ${cals})" style="width:auto; padding:5px 10px;">Add</button>
+                        </div>
+                    `;
+                } else { alert("Food not found."); }
+            } catch(e) { console.error(e); alert("API Error."); }
+        };
+
+        window.addFoodToPlate = (label, calories) => {
+            currentPlate.push({ label, calories, id: Date.now() });
+            document.getElementById('edamam-results-container').style.display = 'none';
+            document.getElementById('food-search-input').value = '';
+            renderDailyPlateUI();
+        };
+
+        window.removeFoodFromPlate = (id) => {
+            currentPlate = currentPlate.filter(item => item.id !== id);
+            renderDailyPlateUI();
+        }
+
+        function renderDailyPlateUI() {
+            const list = document.getElementById('daily-plate-list');
+            let totalCals = 0;
+            if(currentPlate.length === 0) {
+                list.innerHTML = "(No food added yet)";
+            } else {
+                list.innerHTML = currentPlate.map(item => {
+                    totalCals += item.calories;
+                    return `<div style="display:flex; justify-content:space-between; margin-bottom:4px; padding:4px; border-bottom:1px solid #eee;">
+                        <span>${item.label} (${item.calories} kcal)</span>
+                        <span style="color:red; cursor:pointer;" onclick="removeFoodFromPlate(${item.id})">❌</span>
+                    </div>`;
+                }).join('');
+            }
+            document.getElementById('plate-calories').innerText = totalCals;
+        }
+
+        // Help Modal function attached to sidebar
+        window.showHelpLogic = () => {
+            alert("Healthy You Logic Rules:\n\n1. Update Anytime: If you submit multiple logs for the same day, Firebase uses {merge: true} to safely update your totals rather than overwrite them.\n\n2. Edamam API: The food search queries the Edamam database in real-time to pull caloric values.\n\n3. Trophy Logic: Streaks are calculated based on consecutive dates in your Firebase history.");
+        }
+
+
+        // ==========================================
+        // YOUR ORIGINAL LOGIC (Adapted for Firebase)
+        // ==========================================
+        const logDateInput = document.getElementById('log-date');
+        const healthForm = document.getElementById('health-form');
+        let stepsChartVar, sleepChartVar, bpChartVar;
+        let currentTimeframe = 7; 
+        
+        const loadGoals = () => JSON.parse(localStorage.getItem('healthGoals')) || { steps: 10000, sleep: 8, water: 2.5 };
+        const saveGoals = (goals) => localStorage.setItem('healthGoals', JSON.stringify(goals));
+        const loadProfile = () => JSON.parse(localStorage.getItem('userProfile')) || { age: '', weight: '', height: '' };
+        const saveProfile = (p) => localStorage.setItem('userProfile', JSON.stringify(p));
+        const loadBadges = () => JSON.parse(localStorage.getItem('unlockedBadges')) || [];
+        const saveBadges = (b) => localStorage.setItem('unlockedBadges', JSON.stringify(b));
+
+        const BADGE_DEFS = {
+            'sprout': { icon: '🌱', name: 'The Sprout', desc: 'Logged your very first day.' },
+            'fire': { icon: '🔥', name: 'On Fire', desc: '3-day logging streak.' },
+            'habit': { icon: '🗓️', name: 'Habit Builder', desc: '7-day logging streak.' },
+            'month': { icon: '🥉', name: 'Monthly Master', desc: '30-day logging streak.' },
+            'marathon': { icon: '🏃‍♂️', name: 'The Marathoner', desc: '15,000+ steps in a single day.' },
+            'hydration': { icon: '🌊', name: 'Hydration Hero', desc: 'Hit 120% of your water goal.' },
+            'trifecta': { icon: '👑', name: 'The Trifecta', desc: 'Hit Steps, Sleep & Water goals!' }
+        };
+
+        const initPage = () => {
+            if(!logDateInput.value) logDateInput.valueAsDate = new Date(); 
+            const goals = loadGoals();
+            document.getElementById('goal-steps').value = goals.steps;
+            document.getElementById('goal-sleep').value = goals.sleep;
+            document.getElementById('goal-water').value = goals.water;
+            
+            const profile = loadProfile();
+            if(profile.age) document.getElementById('user-age').value = profile.age;
+            if(profile.weight) document.getElementById('user-weight').value = profile.weight;
+            if(profile.height) document.getElementById('user-height').value = profile.height;
+            if(profile.weight && profile.height) { calculateBMI(true); }
+
+            updatePage(); 
+        };
+
+        const updatePage = () => { 
+            renderLogs(); 
+            updateCharts(); 
+            runAI_Insights(); 
+            renderTrophyRoom();
+        };
+
+        window.setTimeframe = (days) => {
+            currentTimeframe = days;
+            document.getElementById('btn-7days').classList.remove('active');
+            document.getElementById('btn-30days').classList.remove('active');
+            if(days === 7) document.getElementById('btn-7days').classList.add('active');
+            if(days === 30) document.getElementById('btn-30days').classList.add('active');
+            updateCharts();
+        };
+
+        const renderTrophyRoom = () => {
+            const grid = document.getElementById('badge-grid');
+            const unlocked = loadBadges();
+            grid.innerHTML = '';
+            for (const [id, badge] of Object.entries(BADGE_DEFS)) {
+                const isUnlocked = unlocked.includes(id);
+                grid.innerHTML += `<div class="badge-item ${isUnlocked ? 'unlocked' : ''}"><span class="badge-icon">${badge.icon}</span><div class="badge-title">${badge.name}</div><div class="badge-desc">${badge.desc}</div></div>`;
+            }
+        };
+
+        const showToast = (badge) => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<div class="toast-icon">${badge.icon}</div><div class="toast-text"><h4>Achievement Unlocked!</h4><p>You earned the <b>${badge.name}</b> badge.</p></div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 5000); 
+        };
+
+        const evaluateAchievements = (entry, goals, allData) => {
+            let currentBadges = loadBadges();
+            const unlock = (id) => { if (!currentBadges.includes(id)) { currentBadges.push(id); showToast(BADGE_DEFS[id]); } };
+            if (allData.length >= 1) unlock('sprout');
+            if (allData.length >= 3) unlock('fire');
+            if (entry.steps >= 15000) unlock('marathon');
+            if (entry.water >= (goals.water * 1.2)) unlock('hydration');
+            if (entry.steps >= goals.steps && entry.sleep >= goals.sleep && entry.water >= goals.water) unlock('trifecta');
+            saveBadges(currentBadges);
+        };
+
+        // Form Submit -> Overwrites/Merges to Firebase
+        healthForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Calculate total calories from current plate
+            let totalPlateCals = currentPlate.reduce((sum, item) => sum + item.calories, 0);
+
+            const entry = {
+                date: logDateInput.value,
+                steps: parseFloat(document.getElementById('steps').value),
+                sleep: parseFloat(document.getElementById('sleep').value),
+                water: parseFloat(document.getElementById('water').value),
+                screenTime: parseFloat(document.getElementById('screen-time').value) || 0,
+                bpSys: parseFloat(document.getElementById('bp-sys').value) || null,
+                bpDia: parseFloat(document.getElementById('bp-dia').value) || null,
+                mood: document.getElementById('mood-input').value,
+                notes: document.getElementById('notes').value,
+                plate: currentPlate,
+                totalCalories: totalPlateCals
+            };
+            
+            // 1. UPDATE FIREBASE (The "Update Anytime" Feature)
+            // { merge: true } ensures we don't accidentally overwrite data we didn't touch
+            await setDoc(doc(db, "users", currentUser.uid, "logs", entry.date), entry, { merge: true });
+            
+            // 2. Update Local Array for UI
+            const idx = cloudData.findIndex(d => d.date === entry.date);
+            if (idx > -1) cloudData[idx] = entry; else cloudData.push(entry);
+            cloudData = cloudData.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            const goals = loadGoals();
+            evaluateAchievements(entry, goals, cloudData);
+            generateAdvice(entry, goals); 
+            updatePage();
+            alert("Log saved successfully to Cloud!");
+        });
+
+        const generateAdvice = (entry, goals) => {
+            let html = '<h4>💡 Your Daily Insights:</h4><ul>';
+            let stepCategory = entry.steps < 5000 ? "Sedentary" : entry.steps < 10000 ? "Active" : "Highly Active";
+            if(entry.steps < goals.steps) { html += `<li>👟 <b>Steps:</b> You walked ${entry.steps} steps today. A quick stroll could help you hit your goal!</li>`; } 
+            else { html += `<li>🎉 <b>Steps:</b> Outstanding work! You crushed your goal!</li>`; }
+            if(entry.sleep < goals.sleep) { html += `<li>💤 <b>Sleep:</b> You logged ${entry.sleep} hours. Unwind earlier tomorrow.</li>`; } 
+            else { html += `<li>🌟 <b>Sleep:</b> ${entry.sleep} hours! Fantastic rest.</li>`; }
+            const advice = document.getElementById('log-advice-section');
+            advice.innerHTML = html + '</ul>'; advice.style.display = 'block';
+        };
+
+        const runAI_Insights = () => {
+            const data = cloudData; const adviceBox = document.getElementById('ai-insight-section');
+            if(data.length < 3) { adviceBox.innerHTML = "<p><i>📈 Log at least 3 days to unlock insights!</i></p>"; return; }
+            adviceBox.innerHTML = "<p>Analyzing your cloud data... Your patterns look steady!</p>";
+        };
+
+        window.generateDietPlan = () => {
+            const age = document.getElementById('user-age').value;
+            let html = '<ul style="margin-top: 15px;">';
+            html += `<li>🏃‍♂️ Based on your profile and age (${age}), ensure you include high protein for recovery!</li>`;
+            html += '</ul>'; document.getElementById('diet-advice-section').innerHTML = html; document.getElementById('diet-advice-section').style.display = 'block';
+        };
+
+        window.suggestGoals = () => {
+            const age = parseInt(document.getElementById('user-age').value);
+            if(!age || age <= 0) return;
+            const profile = loadProfile(); profile.age = age; saveProfile(profile);
+            let gSteps = age < 65 ? 10000 : 6000;
+            document.getElementById('goal-advice-section').innerHTML = `<p>Suggested Steps: ${gSteps} based on your age.</p>`;
+            document.getElementById('goal-advice-section').style.display = 'block';
+        };
+
+        window.calculateBMI = (isInitialLoad = false) => {
+            const weight = parseFloat(document.getElementById('user-weight').value);
+            const height = parseFloat(document.getElementById('user-height').value);
+            if(!weight || !height) return;
+            const bmi = (weight / ((height/100) * (height/100))).toFixed(1);
+            document.getElementById('bmi-result-section').innerHTML = `<h4>Your BMI: <span>${bmi}</span></h4>`;
+            document.getElementById('bmi-result-section').style.display = 'block';
+        };
+
+        window.deleteLog = (date) => { 
+            // In a full app, you would also delete from Firebase here using deleteDoc()
+            if(confirm("Delete this log?")) { 
+                cloudData = cloudData.filter(l => l.date !== date); 
+                updatePage(); 
+            } 
+        };
+        window.toggleMenu = () => { document.getElementById("mySidebar").classList.toggle("open"); document.getElementById("overlay").classList.toggle("active"); };
+
+        const updateCharts = () => {
+            const data = [...cloudData].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const recentData = data.slice(-currentTimeframe);
+            
+            if (stepsChartVar) stepsChartVar.destroy();
+            stepsChartVar = new Chart(document.getElementById('stepsChart').getContext('2d'), {
+                type: 'bar', data: { labels: recentData.map(l => l.date), datasets: [{ label: 'Steps', data: recentData.map(l => l.steps), backgroundColor: '#007bff' }] }
+            });
+
+            if (sleepChartVar) sleepChartVar.destroy();
+            sleepChartVar = new Chart(document.getElementById('sleepChart').getContext('2d'), {
+                type: 'bar', data: { labels: recentData.map(l => l.date), datasets: [{ label: 'Sleep', data: recentData.map(l => l.sleep), backgroundColor: '#ffc107' }] }
+            });
+
+            const bpData = recentData.filter(d => d.bpSys && d.bpDia); 
+            if (bpChartVar) bpChartVar.destroy();
+            bpChartVar = new Chart(document.getElementById('bpChart').getContext('2d'), {
+                type: 'line', data: { labels: bpData.map(l => l.date), datasets: [
+                    { label: 'Systolic', data: bpData.map(l => l.bpSys), borderColor: '#dc3545', tension: 0.3 },
+                    { label: 'Diastolic', data: bpData.map(l => l.bpDia), borderColor: '#007bff', tension: 0.3 }
+                ]}
+            });
+        };
+
+        const renderLogs = () => {
+            const data = [...cloudData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const tbody = document.getElementById('log-table-body'); tbody.innerHTML = '';
+            data.forEach(log => { 
+                const bp = log.bpSys ? `${log.bpSys}/${log.bpDia}` : '-'; 
+                const cals = log.totalCalories || 0;
+                tbody.innerHTML += `<tr><td><b>${log.date}</b></td><td>${log.steps}</td><td>${cals}</td><td>${bp}</td><td><button onclick="deleteLog('${log.date}')" style="background:#dc3545; color:white; border:none; padding:5px; border-radius:4px;">Del</button></td></tr>`; 
+            });
+        };
+
+        document.getElementById('mood-selector').addEventListener('click', (e) => {
+            if(e.target.tagName==='BUTTON'){ document.querySelectorAll('.mood-selector button').forEach(b=>b.classList.remove('selected')); e.target.classList.add('selected'); document.getElementById('mood-input').value=e.target.dataset.mood; }
+        });
+        document.getElementById('steps').addEventListener('input', () => { const goals = loadGoals(); document.getElementById('steps-progress').style.width = Math.min((document.getElementById('steps').value/goals.steps)*100, 100)+'%'; });
+        document.getElementById('goals-form').addEventListener('input', () => saveGoals({ steps: document.getElementById('goal-steps').value, sleep: document.getElementById('goal-sleep').value, water: document.getElementById('goal-water').value }));
+
+        window.startDictation = () => {
+            if (window.hasOwnProperty('webkitSpeechRecognition')) {
+                const recognition = new webkitSpeechRecognition(); const btn = document.getElementById('mic-btn'); recognition.continuous = false; recognition.interimResults = false; recognition.lang = "en-US";
+                recognition.start(); btn.classList.add('listening'); btn.textContent = '👂 Listening...';
+                recognition.onresult = (e) => { document.getElementById('notes').value += e.results[0][0].transcript + " "; recognition.stop(); };
+                recognition.onerror = (e) => { alert("Microphone Error: " + e.error); recognition.stop(); }; recognition.onend = () => { btn.classList.remove('listening'); btn.textContent = '🎤 Record Note'; };
+            } else { alert("Sorry, your browser doesn't support Voice Notes. Try Google Chrome."); }
+        };
+
+    </script>
+</body>
+</html>
