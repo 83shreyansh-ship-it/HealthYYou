@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthy You | Ultimate Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --sky-light: #e0f4ff;
+            --sky-mid: #87ceeb;
+            --sky-deep: #38b6e8;
+            --sky-accent: #0ea5e9;
+            --sky-dark: #0369a1;
+            --white: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.72);
+            --glass-border: rgba(135, 206, 235, 0.4);
+            --primary-color: #0ea5e9;
+            --secondary-color: #f0f9ff;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --card-bg: rgba(255,255,255,0.85);
+            --shadow: 0 8px 32px rgba(14, 165, 233, 0.13);
+            --shadow-hover: 0 16px 48px rgba(14, 165, 233, 0.22);
+            --radius: 18px;
+            --radius-sm: 10px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #e0f4ff 0%, #ffffff 40%, #bae6fd 75%, #e0f4ff 100%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            min-height: 100vh;
+            padding-top: 72px;
+        }
+
+        /* Animated background orbs */
+        body::before, body::after {
+            content: ''; position: fixed; border-radius: 50%;
+            filter: blur(80px); z-index: -1;
+            animation: orb-drift 12s ease-in-out infinite alternate;
+        }
+        body::before {
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(14,165,233,0.22), transparent 70%);
+            top: -80px; right: -80px;
+        }
+        body::after {
+            width: 320px; height: 320px;
+            background: radial-gradient(circle, rgba(56,182,232,0.18), transparent 70%);
+            bottom: 60px; left: -60px;
+            animation-direction: alternate-reverse;
+        }
+        @keyframes orb-drift {
+            from { transform: translateY(0) scale(1); }
+            to   { transform: translateY(40px) scale(1.08); }
+        }
+
+        .container { max-width: 940px; margin: auto; padding: 0 22px; }
+
+        /* ─── NAVBAR ─────────────────────────────────── */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 68px;
+            background: linear-gradient(90deg, #0369a1 0%, #0ea5e9 60%, #38b6e8 100%);
+            color: white; display: flex; align-items: center; padding: 0 24px;
+            box-shadow: 0 4px 24px rgba(3,105,161,0.25); z-index: 1000;
+            backdrop-filter: blur(12px);
+        }
+        .navbar::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+        }
+        .hamburger { font-size: 1.7rem; cursor: pointer; margin-right: 16px; transition: transform 0.2s; }
+        .hamburger:hover { transform: rotate(90deg); }
+
+        /* ─── SIDEBAR ────────────────────────────────── */
+        .sidebar {
+            height: 100%; width: 265px; position: fixed; z-index: 1001; top: 0; left: -265px;
+            background: linear-gradient(180deg, #0f4c75 0%, #1b6ca8 60%, #1e87c9 100%);
+            overflow-x: hidden; transition: left 0.32s cubic-bezier(.4,0,.2,1); padding-top: 68px;
+            box-shadow: 4px 0 32px rgba(3,105,161,0.35);
+        }
+        .sidebar.open { left: 0; }
+        .sidebar a {
+            padding: 14px 26px; text-decoration: none; font-size: 1.05rem;
+            color: rgba(255,255,255,0.9); display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1); transition: background 0.2s, padding-left 0.2s;
+        }
+        .sidebar a:hover { background: rgba(255,255,255,0.15); padding-left: 34px; }
+        .sidebar .closebtn {
+            position: absolute; top: 14px; right: 20px; font-size: 2rem; color: rgba(255,255,255,0.7);
+            cursor: pointer; transition: color 0.2s, transform 0.2s;
+        }
+        .sidebar .closebtn:hover { color: white; transform: rotate(90deg); }
+        .overlay {
+            position: fixed; display: none; width: 100%; height: 100%; top: 0; left: 0;
+            background-color: rgba(3,105,161,0.35); backdrop-filter: blur(4px); z-index: 1000;
+        }
+        .overlay.active { display: block; }
+
+        /* ─── AUTH OVERLAY ───────────────────────────── */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(251,191,36,0.28) 0%, transparent 55%),
+                        radial-gradient(ellipse at 75% 80%, rgba(245,158,11,0.22) 0%, transparent 50%),
+                        linear-gradient(135deg, #0c2340 0%, #0f3460 35%, #1a5276 65%, #1c3a5e 100%);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+        }
+        #auth-overlay::before {
+            content: ''; position: absolute; width: 380px; height: 380px;
+            background: radial-gradient(circle, rgba(251,191,36,0.18) 0%, transparent 70%);
+            top: -80px; right: -60px; border-radius: 50%; filter: blur(60px);
+            animation: orb-drift 10s ease-in-out infinite alternate; pointer-events: none;
+        }
+        #auth-overlay::after {
+            content: ''; position: absolute; width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(245,158,11,0.16) 0%, transparent 70%);
+            bottom: -40px; left: -40px; border-radius: 50%; filter: blur(50px);
+            animation: orb-drift 13s ease-in-out infinite alternate-reverse; pointer-events: none;
+        }
+        .auth-card {
+            background: linear-gradient(160deg, rgba(255,253,235,0.72) 0%, rgba(255,248,210,0.58) 40%, rgba(255,255,255,0.52) 70%, rgba(254,243,199,0.62) 100%);
+            backdrop-filter: blur(28px) saturate(1.6) brightness(1.08); -webkit-backdrop-filter: blur(28px) saturate(1.6) brightness(1.08);
+            padding: 44px 38px; border-radius: 28px; border: 1.5px solid rgba(251,191,36,0.38);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.28) inset, 0 8px 32px rgba(245,158,11,0.22), 0 24px 64px rgba(0,0,0,0.36), 0 0 80px rgba(251,191,36,0.14);
+            width: 90%; max-width: 430px; text-align: center; position: relative; overflow: hidden;
+        }
+        .auth-card::before {
+            content: ''; position: absolute; top: 0; left: 5%; right: 5%; height: 55%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,248,210,0.12) 50%, transparent 100%);
+            border-radius: 0 0 60% 60%; pointer-events: none;
+        }
+        .auth-card::after {
+            content: ''; position: absolute; inset: 0; border-radius: 28px;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            opacity: 0.55; pointer-events: none; mix-blend-mode: overlay;
+        }
+        .auth-card h2 {
+            background: linear-gradient(135deg, #92400e, #d97706 45%, #f59e0b 75%, #fbbf24);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 1.85rem; margin-bottom: 8px; position: relative; z-index: 1; filter: drop-shadow(0 2px 8px rgba(245,158,11,0.35));
+        }
+        .auth-card p { color: rgba(120,80,0,0.7); position: relative; z-index: 1; }
+        .auth-card input { margin-top: 12px; border: 1.5px solid rgba(251,191,36,0.45); background: rgba(255,253,235,0.68); color: #1c1a10; position: relative; z-index: 1; }
+        .auth-card input::placeholder { color: rgba(120,80,20,0.55); }
+        .auth-card input:focus { border-color: #f59e0b; outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.22), 0 0 16px rgba(251,191,36,0.3); background: rgba(255,255,255,0.88); }
+        #btn-login { background: linear-gradient(135deg, #d97706, #f59e0b 60%, #fbbf24) !important; box-shadow: 0 4px 18px rgba(245,158,11,0.45); color: #1c1204; position: relative; z-index: 1; }
+        #btn-login:hover { box-shadow: 0 8px 28px rgba(245,158,11,0.65); filter: brightness(1.08); }
+        #btn-register { background: linear-gradient(135deg, #1e4d8c, #2563eb 60%, #3b82f6) !important; box-shadow: 0 4px 18px rgba(37,99,235,0.35); border: 1px solid rgba(251,191,36,0.3); position: relative; z-index: 1; }
+        #btn-register:hover { box-shadow: 0 8px 28px rgba(37,99,235,0.5), 0 0 20px rgba(251,191,36,0.2); }
+
+        /* ─── SUPPORT MODAL ──────────────────────────── */
+        .modal-card {
+            background: var(--glass-bg); backdrop-filter: blur(20px); padding: 32px; border-radius: 22px;
+            box-shadow: 0 20px 60px rgba(14,165,233,0.2), 0 0 0 1px var(--glass-border);
+            width: 90%; max-width: 620px; margin: 8% auto; position: relative; max-height: 82vh; overflow-y: auto;
+        }
+        .close-modal { position: absolute; right: 20px; top: 20px; font-size: 1.6rem; cursor: pointer; color: var(--text-muted); line-height: 1; transition: color 0.2s, transform 0.2s; }
+        .close-modal:hover { color: var(--danger-color); transform: rotate(90deg); }
+        details { background: linear-gradient(135deg, #f0f9ff, rgba(186,230,253,0.3)); padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 10px; cursor: pointer; border: 1px solid var(--glass-border); transition: box-shadow 0.2s; }
+        details[open] { box-shadow: 0 4px 16px rgba(14,165,233,0.1); }
+        summary { font-weight: 600; outline: none; color: var(--sky-dark); }
+        details p { margin-top: 10px; font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; padding-top: 10px; border-top: 1px solid var(--glass-border); }
+
+        /* ─── CARDS ──────────────────────────────────── */
+        .card { background: var(--glass-bg); backdrop-filter: blur(16px); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); border: 1px solid var(--glass-border); margin-bottom: 22px; width: 100%; transition: box-shadow 0.3s, transform 0.3s; }
+        .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+        h2 { background: linear-gradient(135deg, #0369a1, #38b6e8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 20px; font-size: 1.4rem; font-weight: 700; }
+        h3 { color: var(--sky-dark); text-align: center; margin-bottom: 18px; font-size: 1.15rem; font-weight: 700; }
+        form { display: grid; gap: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        label { font-weight: 600; display: block; margin-bottom: 5px; color: var(--sky-dark); font-size: 0.88rem; letter-spacing: 0.02em; }
+        input, textarea, select { width: 100%; padding: 11px 14px; border: 1.5px solid rgba(135,206,235,0.45); border-radius: var(--radius-sm); font-size: 0.97rem; font-family: inherit; background: rgba(255,255,255,0.82); color: var(--text-color); transition: border-color 0.2s, box-shadow 0.2s; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--sky-accent); box-shadow: 0 0 0 3px rgba(14,165,233,0.18); background: white; }
+        button { background: linear-gradient(135deg, #0ea5e9, #38b6e8); color: white; border: none; padding: 12px 18px; border-radius: var(--radius-sm); width: 100%; font-weight: 700; font-size: 0.97rem; cursor: pointer; margin-top: 5px; transition: transform 0.18s, box-shadow 0.18s, filter 0.18s; box-shadow: 0 4px 14px rgba(14,165,233,0.3); letter-spacing: 0.02em; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.42); filter: brightness(1.06); }
+        button:active { transform: translateY(0); }
+
+        /* ─── PROGRESS BAR ───────────────────────────── */
+        .progress-bar { width: 100%; background: rgba(186,230,253,0.35); height: 14px; border-radius: 99px; overflow: visible; margin-top: 8px; box-shadow: inset 0 2px 6px rgba(14,165,233,0.12); position: relative; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #0369a1 0%, #0ea5e9 50%, #7dd3fc 100%); width: 0%; transition: width 0.9s cubic-bezier(.22,1,.36,1); border-radius: 99px; position: relative; box-shadow: 0 0 8px rgba(14,165,233,0.7), 0 0 20px rgba(14,165,233,0.45), 0 0 40px rgba(14,165,233,0.2); animation: bar-glow-pulse 2.4s ease-in-out infinite; }
+        .progress-fill::after { content: ''; position: absolute; top: 0; left: -60%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent); border-radius: 99px; animation: bar-shimmer 2.2s cubic-bezier(.4,0,.6,1) infinite; }
+        @keyframes bar-glow-pulse { 0%, 100% { box-shadow: 0 0 8px rgba(14,165,233,0.70), 0 0 22px rgba(14,165,233,0.45), 0 0 42px rgba(14,165,233,0.20); } 50% { box-shadow: 0 0 14px rgba(14,165,233,0.95), 0 0 36px rgba(14,165,233,0.65), 0 0 64px rgba(14,165,233,0.35); } }
+        @keyframes bar-shimmer { 0% { left: -60%; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { left: 120%; opacity: 0; } }
+
+        /* ─── BP TABLE ───────────────────────────────── */
+        .bp-table { width: 100%; font-size: 0.85rem; border-collapse: collapse; margin-top: 10px; border-radius: 10px; overflow: hidden; }
+        .bp-table th, .bp-table td { padding: 10px 12px; border: 1px solid rgba(186,230,253,0.6); text-align: center; }
+        .bp-table th { background: linear-gradient(90deg, #0369a1, #0ea5e9); color: white; font-weight: 600; }
+        .bp-normal { background: #d1fae5; color: #065f46; }
+        .bp-elevated { background: #fef3c7; color: #78350f; }
+        .bp-stage1 { background: #fde68a; color: #78350f; }
+        .bp-stage2 { background: #fee2e2; color: #7f1d1d; }
+
+        /* ─── MOOD SELECTOR ──────────────────────────── */
+        .mood-selector { display: flex; justify-content: space-around; margin-top: 8px; gap: 4px; }
+        .mood-selector button { background: rgba(255,255,255,0.6); border: 2px solid transparent; font-size: 1.9rem; cursor: pointer; padding: 6px 10px; border-radius: 50%; width: auto; box-shadow: none; transition: transform 0.2s, border-color 0.2s, background 0.2s; }
+        .mood-selector button:hover { transform: scale(1.2); background: rgba(255,255,255,0.9); }
+        .mood-selector button.selected { border-color: var(--sky-accent); background: rgba(14,165,233,0.14); transform: scale(1.15); box-shadow: 0 0 0 3px rgba(14,165,233,0.18); }
+
+        /* ─── ADVICE BOXES ───────────────────────────── */
+        .advice-box { background: linear-gradient(135deg, rgba(224,244,255,0.8), rgba(186,230,253,0.5)); padding: 18px 20px; border-left: 5px solid var(--sky-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; display: none; margin-top: 15px; margin-bottom: 15px; box-shadow: 0 2px 12px rgba(14,165,233,0.1); }
+        .advice-box.ai-theme { background: linear-gradient(135deg, rgba(243,229,245,0.85), rgba(225,190,231,0.4)); border-left-color: #9c27b0; }
+        .advice-box ul { padding-left: 20px; margin: 0; }
+        .advice-box li { margin-bottom: 10px; line-height: 1.65; }
+
+        #streak-display { text-align: center; font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 22px; filter: drop-shadow(0 2px 8px rgba(239,68,68,0.25)); }
+
+        /* ─── HISTORY TABLE ──────────────────────────── */
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-sm); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th, td { border: 1px solid rgba(186,230,253,0.5); padding: 9px 10px; text-align: left; white-space: nowrap; }
+        th { background: linear-gradient(90deg, #e0f4ff, #bae6fd); color: var(--sky-dark); font-weight: 700; }
+        tr:nth-child(even) td { background: rgba(224,244,255,0.35); }
+        tr:hover td { background: rgba(186,230,253,0.4); }
+
+        .mic-btn { background: linear-gradient(135deg, #64748b, #94a3b8); width: auto; display: inline-block; padding: 6px 12px; font-size: 0.92rem; margin-left: 10px; box-shadow: none; }
+        .mic-btn.listening { background: linear-gradient(135deg, #ef4444, #dc2626); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+
+        /* ─── TROPHY / BADGES ────────────────────────── */
+        .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; margin-top: 16px; }
+        .badge-item { background: rgba(255,255,255,0.55); padding: 16px 12px; border-radius: 14px; border: 2px solid rgba(186,230,253,0.4); text-align: center; transition: all 0.3s cubic-bezier(.4,0,.2,1); filter: grayscale(100%); opacity: 0.48; }
+        .badge-item.unlocked { filter: grayscale(0%); opacity: 1; border-color: var(--warning-color); background: linear-gradient(135deg, #fffbeb, #fef3c7); box-shadow: 0 6px 20px rgba(245,158,11,0.25); transform: scale(1.03); }
+        .badge-item.unlocked:hover { transform: scale(1.07); }
+        .badge-icon { font-size: 2.4rem; display: block; margin-bottom: 10px; }
+        .badge-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; color: var(--sky-dark); }
+        .badge-desc { font-size: 0.74rem; color: var(--text-muted); line-height: 1.35; }
+
+        /* ─── TOASTS ─────────────────────────────────── */
+        #toast-container { position: fixed; top: 82px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--glass-bg); backdrop-filter: blur(16px); border-left: 5px solid var(--warning-color); padding: 14px 18px; border-radius: 14px; box-shadow: 0 8px 32px rgba(14,165,233,0.2); display: flex; align-items: center; gap: 14px; animation: slideIn 0.45s cubic-bezier(.4,0,.2,1), fadeOut 0.5s ease-in 4.5s forwards; width: 310px; border: 1px solid var(--glass-border); }
+        .toast-icon { font-size: 2rem; }
+        .toast-text h4 { margin: 0 0 3px 0; font-size: 0.97rem; color: var(--text-color); font-weight: 700; }
+        .toast-text p { margin: 0; font-size: 0.82rem; color: var(--text-muted); }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { transform: translateY(-18px); opacity: 0; visibility: hidden; } }
+
+        /* ─── TOGGLE BUTTONS / AVG BOX ───────────────── */
+        .toggle-btn { background: rgba(255,255,255,0.7); color: var(--sky-dark); border: 2px solid rgba(135,206,235,0.5); padding: 8px 18px; margin: 0 5px; border-radius: 99px; width: auto; display: inline-block; font-weight: 600; box-shadow: none; transition: all 0.2s; }
+        .toggle-btn:hover { background: rgba(14,165,233,0.1); transform: none; box-shadow: none; }
+        .toggle-btn.active { background: linear-gradient(135deg, #0ea5e9, #38b6e8); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(14,165,233,0.35); }
+        .avg-box { background: linear-gradient(135deg, rgba(224,244,255,0.85), rgba(186,230,253,0.55)); border: 1px solid rgba(135,206,235,0.45); padding: 18px 14px; border-radius: 14px; display: flex; justify-content: space-around; text-align: center; margin-top: 16px; }
+        .avg-box h4 { color: var(--sky-dark) !important; font-weight: 700; }
+
+        /* ─── FOOD AUTOCOMPLETE ───────────────────────── */
+        .autocomplete-container { position: relative; width: 100%; }
+        .autocomplete-items { position: absolute; border: 1px solid rgba(135,206,235,0.5); border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); max-height: 210px; overflow-y: auto; border-radius: 0 0 var(--radius-sm) var(--radius-sm); box-shadow: 0 8px 24px rgba(14,165,233,0.15); }
+        .autocomplete-items div { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(186,230,253,0.4); display: flex; justify-content: space-between; font-size: 0.93rem; }
+        .autocomplete-items div:hover { background: linear-gradient(90deg, rgba(224,244,255,0.8), rgba(186,230,253,0.5)); }
+        .custom-food-badge { background: linear-gradient(135deg, #7c3aed, #9c27b0); color: white; padding: 2px 7px; border-radius: 6px; font-size: 0.7rem; }
+
+        /* ─── WELCOME BANNER ─────────────────────────── */
+        .welcome-banner { background: linear-gradient(135deg, rgba(224,244,255,0.9), rgba(186,230,253,0.65)); border: 1px solid rgba(135,206,235,0.5); padding: 14px 20px; text-align: center; border-radius: 14px; margin-bottom: 22px; font-size: 0.96rem; color: var(--sky-dark); }
+        .welcome-banner a { color: var(--sky-accent); font-weight: 700; text-decoration: none; }
+        .welcome-banner a:hover { text-decoration: underline; }
+
+        /* ─── FOOD PLATE SECTION ─────────────────────── */
+        .food-section-box { background: linear-gradient(135deg, rgba(255,253,240,0.85), rgba(254,243,199,0.5)); border: 1px solid rgba(245,158,11,0.3); padding: 16px; border-radius: 14px; margin-bottom: 22px; }
+
+        /* BMI result box when it's a healthy result */
+        #bmi-result-section.bmi-healthy { background: linear-gradient(135deg, rgba(209,250,229,0.9), rgba(167,243,208,0.7)); border-left: 5px solid #10b981; border-radius: 14px; animation: bmi-card-pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards; }
+        @keyframes bmi-card-pop { 0% { transform: scale(0.92); } 100% { transform: scale(1); } }
+        .heartbeat-ring { position: absolute; border-radius: 50%; border: 3px solid #10b981; animation: heart-ripple 0.9s ease-out forwards; pointer-events: none; }
+        @keyframes heart-ripple { 0% { transform: scale(0.4); opacity: 0.9; } 100% { transform: scale(2.8); opacity: 0; } }
+        .bmi-heart-icon { display: inline-block; animation: heart-beat 0.4s ease-in-out 3; }
+        @keyframes heart-beat { 0%,100% { transform: scale(1); filter: drop-shadow(0 0 0px #10b981); } 50% { transform: scale(1.45); filter: drop-shadow(0 0 14px #10b981); } }
+        #bmi-card.bmi-perfect-glow { box-shadow: var(--shadow), 0 0 0 2px rgba(16,185,129,0.5), 0 0 40px rgba(16,185,129,0.25), 0 0 80px rgba(16,185,129,0.12); transition: box-shadow 0.4s ease; }
+
+        @media (max-width: 600px) {
+            .form-row, #goals-form { grid-template-columns: 1fr !important; }
+            #toast-container { top: 72px; right: 10px; left: 10px; align-items: center; }
+            .toast { width: 100%; max-width: 420px; }
+            .modal-card { width: 97%; margin: 5% auto; }
+            body::before, body::after { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2>Healthy You Login</h2>
+            <p style="color: #666; margin-bottom: 20px;">Secure cross-device cloud access.</p>
+            <input type="email" id="auth-email" placeholder="Email Address">
+            <input type="password" id="auth-password" placeholder="Password">
+            <button id="btn-login" style="background: var(--success-color);">Login</button>
+            <button id="btn-register" style="background: var(--primary-color);">Register</button>
+            <p id="auth-error" style="color: var(--danger-color); font-size: 0.9rem; display: none; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <div class="navbar">
+        <span class="hamburger" onclick="toggleMenu()">&#9776;</span>
+        <span style="font-size: 1.2rem; font-weight: 800; letter-spacing: 0.03em;">💙 Healthy You</span>
+    </div>
+
+    <div id="mySidebar" class="sidebar">
+        <span class="closebtn" onclick="toggleMenu()">&times;</span>
+        <a href="#" onclick="toggleMenu(); window.scrollTo(0,0);">🏠 Dashboard</a>
+        <a href="#goals-card" onclick="toggleMenu()">🎯 Goals & Age</a>
+        <a href="#log-card" onclick="toggleMenu()">✏️ Log Data</a>
+        <a href="#ai-card" onclick="toggleMenu()">🧠 Mood Patterns</a>
+        <a href="#diet-card" onclick="toggleMenu()">🥗 Diet Plan</a>
+        <a href="#graphs-card" onclick="toggleMenu()">📈 Activity Trends</a>
+        <a href="#bmi-card" onclick="toggleMenu()">⚖️ BMI Calculator</a>
+        <a href="#history-card" onclick="toggleMenu()">📋 History</a>
+        <a href="#trophy-card" onclick="toggleMenu()">🏆 Trophy Room</a>
+        <a href="#" onclick="exportToCSV(); toggleMenu()">📥 Export CSV</a>
+        <a href="#" onclick="openSupportModal(); toggleMenu()" style="color: #ffc107;">🛠️ Help & Support</a>
+        <a href="#" id="btn-logout" style="color: #dc3545;">🚪 Logout</a>
+    </div>
+    
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div id="support-modal" class="overlay">
+        <div class="modal-card">
+            <span class="close-modal" onclick="closeSupportModal()">&times;</span>
+            <h2 id="support-title" onclick="adminTicketCheck()">🛠️ Help & Support</h2>
+            
+            <h3 style="margin-top:20px; font-size: 1.1rem; color: #333;">🚀 Quick Start Guide</h3>
+            <div style="display:flex; justify-content:space-between; text-align:center; gap:5px; background: #e0f7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div><i class="fas fa-bullseye text-2xl" style="color:var(--primary-color); font-size: 1.5rem;"></i><br><b>1. Set Goals</b><br><small>Enter your age</small></div>
+                <div style="align-self: center;">➡️</div>
+                <div><i class="fas fa-pencil-alt text-2xl" style="color:var(--success-color); font-size: 1.5rem;"></i><br><b>2. Log Daily</b><br><small>Track food & steps</small></div>
+                <div style="align-self: center;">➡️</div>
+                <div><i class="fas fa-trophy text-2xl" style="color:var(--warning-color); font-size: 1.5rem;"></i><br><b>3. Trophies</b><br><small>Build your streak</small></div>
+            </div>
+
+            <h3 style="font-size: 1.1rem; color: #333;">❓ Frequently Asked Questions</h3>
+            <details>
+                <summary>How does the app calculate my Daily Goals?</summary>
+                <p>The system uses medical guidelines based on your inputted age to calculate optimal step targets, sleep duration, and water intake to keep your body functioning at its best.</p>
+            </details>
+            <details>
+                <summary>What happens if I miss a day of logging?</summary>
+                <p>Your current streak (the fire icon) will reset to 0. However, don't worry! All your historical data, custom foods, and unlocked trophies are permanently saved in the cloud.</p>
+            </details>
+            <details>
+                <summary>How is my data stored?</summary>
+                <p>Healthy You uses Firebase Cloud Firestore. Your data is securely attached to your email account, allowing you to log in from your phone or laptop and see the exact same metrics.</p>
+            </details>
+
+            <h3 style="margin-top:25px; font-size: 1.1rem; color: #dc3545;">🐞 Report an Issue</h3>
+            <div id="ticket-form-area" style="background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #f8d7da;">
+                <textarea id="bug-report-text" rows="3" placeholder="What went wrong? (e.g., The graph isn't loading)" style="margin-bottom: 10px;"></textarea>
+                <button onclick="submitTicket()" style="background: var(--danger-color);">Submit Ticket</button>
+            </div>
+            <div id="ticket-success" style="display:none; background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-top: 15px; font-weight:bold; text-align:center; border: 1px solid #c3e6cb;"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <div class="welcome-banner">
+            👋 <strong>New to the site?</strong> Open the <a href="#" onclick="openSupportModal()">Help &amp; Support</a> menu to discover all the features!
+        </div>
+
+        <div id="streak-display">🔥 0-Day Streak!</div>
+
+        <div class="card" id="goals-card">
+            <h3>🎯 Age & Daily Goals</h3>
+            <div style="background: #f1f3f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <label>Enter your age for tailored health targets:</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="user-age" placeholder="Age (e.g. 20)">
+                    <button type="button" onclick="suggestGoals()" style="width: auto;">Get Suggestions</button>
+                </div>
+            </div>
+            <div id="goal-advice-section" class="advice-box"></div>
+            <form id="goals-form" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div><label>Steps</label><input type="number" id="goal-steps" value="10000"></div>
+                <div><label>Sleep (h)</label><input type="number" id="goal-sleep" value="8"></div>
+                <div><label>Water (L)</label><input type="number" id="goal-water" step="0.1" value="2.5"></div>
+            </form>
+        </div>
+
+        <div class="card" id="log-card">
+            <h2>✏️ Log Today (Auto-Merges Updates)</h2>
+            
+            <div class="food-section-box">
+                <label>🍔 Food Database (Edamam & Custom)</label>
+                <div class="autocomplete-container">
+                    <input type="text" id="food-search-input" placeholder="Type a food (e.g., Banana, Dosa)..." autocomplete="off">
+                    <div id="autocomplete-list" class="autocomplete-items"></div>
+                </div>
+                
+                <button type="button" onclick="toggleCustomFood()" style="background: #6c757d; font-size: 0.85rem; padding: 6px; margin-top: 10px; width: auto;"><i class="fas fa-plus"></i> Create Custom Food</button>
+                
+                <div id="custom-food-box" style="display:none; margin-top: 10px; background: #e9ecef; padding: 10px; border-radius: 6px;">
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="custom-food-name" placeholder="Food Name">
+                        <input type="number" id="custom-food-cal" placeholder="Kcal" style="width: 100px;">
+                        <button type="button" onclick="saveCustomFood()" style="width: auto; background: #6f42c1;">Save</button>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 15px;">
+                    <strong>Your Plate Today:</strong> <span id="plate-calories" style="color: #e67e22; font-weight: bold;">0</span> kcal
+                    <div id="daily-plate-list" style="margin-top: 5px; font-size: 0.9rem; color: #555;">(No food added yet)</div>
+                </div>
+            </div>
+
+            <form id="health-form">
+                <div class="form-row">
+                    <div><label>Date</label><input type="date" id="log-date" required></div>
+                    <div>
+                        <label>Steps</label>
+                        <input type="number" id="steps" required>
+                        <div class="progress-bar"><div id="steps-progress" class="progress-fill"></div></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div><label>Sleep (h)</label><input type="number" id="sleep" step="0.1" required></div>
+                    <div><label>Water (L)</label><input type="number" id="water" step="0.1" required></div>
+                </div>
+                <div class="form-row">
+                    <div><label>Screen (h)</label><input type="number" id="screen-time" step="0.5"></div>
+                    <div>
+                        <label>BP (Optional)</label>
+                        <div style="display:flex; gap:5px; align-items: center;">
+                            <input type="number" id="bp-sys" placeholder="120" style="width: 50%;"> / 
+                            <input type="number" id="bp-dia" placeholder="80" style="width: 50%;">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label>Mood</label>
+                    <div class="mood-selector" id="mood-selector">
+                        <button type="button" data-mood="😩">😩</button><button type="button" data-mood="😕">😕</button>
+                        <button type="button" data-mood="😐">😐</button><button type="button" data-mood="🙂">🙂</button>
+                        <button type="button" data-mood="😄">😄</button>
+                    </div>
+                    <input type="hidden" id="mood-input">
+                </div>
+                <div>
+                    <label style="display:inline-block;">Notes</label>
+                    <button type="button" class="mic-btn" id="mic-btn" onclick="startDictation()">🎤 Record Note</button>
+                    <textarea id="notes" placeholder="Type or use voice..."></textarea>
+                </div>
+                <button type="submit" style="background: var(--success-color);">Save Daily Log to Cloud</button>
+            </form>
+            <div id="log-advice-section" class="advice-box"></div>
+        </div>
+
+        <div class="card" id="ai-card">
+            <h3 style="color: #9c27b0;">🧠 Mood Patterns</h3>
+            <p style="text-align: center; margin-top: -10px; margin-bottom: 20px; color: #666;">We look at your past days to find hidden connections between your habits and your mood!</p>
+            <div id="ai-insight-section" class="advice-box ai-theme" style="display: block;">Loading insights...</div>
+        </div>
+
+        <div class="card" id="diet-card">
+            <h3>🥗 Smart Diet Suggestions</h3>
+            <button type="button" onclick="generateDietPlan()" style="background-color: #28a745;">Generate My Meal Focus</button>
+            <div id="diet-advice-section" class="advice-box"></div>
+        </div>
+
+        <div class="card" id="graphs-card">
+            <h2>📈 Activity Trends</h2>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button type="button" id="btn-7days" class="toggle-btn active" onclick="setTimeframe(7)">Last 7 Entries</button>
+                <button type="button" id="btn-30days" class="toggle-btn" onclick="setTimeframe(30)">Last 30 Entries</button>
+            </div>
+            
+            <div class="avg-box">
+                <div><h4 style="margin:0; color:#0277bd;" id="avg-title-steps">7-Day Avg Steps</h4><p id="avg-val-steps" style="font-size:1.5rem; font-weight:bold; margin:5px 0;">0</p></div>
+                <div><h4 style="margin:0; color:#0277bd;" id="avg-title-sleep">7-Day Avg Sleep</h4><p id="avg-val-sleep" style="font-size:1.5rem; font-weight:bold; margin:5px 0;">0h</p></div>
+            </div>
+            
+            <h4 style="text-align: center; margin-top: 25px; color: var(--primary-color);">Daily Steps</h4>
+            <canvas id="stepsChart"></canvas>
+            
+            <h4 style="text-align: center; margin-top: 35px; color: var(--warning-color);">Daily Sleep</h4>
+            <canvas id="sleepChart"></canvas>
+
+            <hr style="border: 1px solid #eee; margin: 30px 0;">
+            <h4 style="text-align: center; color: var(--danger-color);">Blood Pressure</h4>
+            <p style="text-align: center; font-size: 0.85rem; color: #666;">Green dashed lines represent Normal AHA limits (120/80).</p>
+            <canvas id="bpChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>ℹ️ BP Guide (AHA)</h3>
+            <table class="bp-table">
+                <tr><th>Category</th><th>Systolic</th><th>Diastolic</th></tr>
+                <tr class="bp-normal"><td>Normal</td><td>&lt; 120</td><td>&lt; 80</td></tr>
+                <tr class="bp-elevated"><td>Elevated</td><td>120-129</td><td>&lt; 80</td></tr>
+                <tr class="bp-stage1"><td>Stage 1</td><td>130-139</td><td>80-89</td></tr>
+                <tr class="bp-stage2"><td>Stage 2</td><td>140+</td><td>90+</td></tr>
+            </table>
+        </div>
+
+        <div class="card" id="bmi-card">
+            <h3>⚖️ BMI Calculator (Cloud Saved)</h3>
+            <form id="bmi-form" class="form-row">
+                <div><label>Weight (kg)</label><input type="number" id="user-weight" step="0.1" placeholder="e.g. 70.5"></div>
+                <div><label>Height (cm)</label><input type="number" id="user-height" placeholder="e.g. 175"></div>
+            </form>
+            <button type="button" onclick="calculateBMI()" style="margin-top: 15px; background-color: #6c757d;">Calculate & Save BMI</button>
+            <div id="bmi-result-section" class="advice-box" style="text-align: center;"></div>
+        </div>
+        
+        <div class="card" id="history-card">
+            <h2>📋 Full History</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Date</th><th>Steps</th><th>Sleep</th><th>Water</th><th>Screen</th><th>Food (kcal)</th><th>BP</th><th>Notes</th><th>Action</th></tr></thead>
+                    <tbody id="log-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" id="trophy-card" style="border: 2px solid rgba(245,158,11,0.6); background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,251,235,0.8));">
+            <h3>🏆 Trophy Room</h3>
+            <p style="text-align: center; margin-top: -10px; margin-bottom: 20px; color: #666;">Unlock achievements by logging consistently!</p>
+            <div class="badge-grid" id="badge-grid"></div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuZzCOUVO9y6mvAxvfh3XN-NO0vBW2WcE",
+            authDomain: "healthyyou-e743f.firebaseapp.com",
+            projectId: "healthyyou-e743f",
+            storageBucket: "healthyyou-e743f.firebasestorage.app",
+            messagingSenderId: "317605943899",
+            appId: "1:317605943899:web:bbc2632d68c7d4d8597d7e"
+        };
+        const EDAMAM_ID = "d898a8a3";
+        const EDAMAM_KEY = "7e323c25a1984b5a0cbc90b70ff961c8";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let currentUser = null;
+        let cloudData = []; 
+        let currentPlate = []; 
+        let userProfile = { customFoods: [], unlockedBadges: [], age: '', weight: '', height: '' };
+
+        // Authenticaton
+        document.getElementById('btn-login').onclick = async () => {
+            try { await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value); }
+            catch(e) { document.getElementById('auth-error').innerText = e.message; document.getElementById('auth-error').style.display = 'block'; }
+        };
+        document.getElementById('btn-register').onclick = async () => {
+            try { await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value); }
+            catch(e) { document.getElementById('auth-error').innerText = e.message; document.getElementById('auth-error').style.display = 'block'; }
+        };
+        document.getElementById('btn-logout').onclick = () => signOut(auth);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-overlay').style.display = 'none';
+                await loadCloudProfile();
+                await loadCloudData(); 
+                initPage(); 
+            } else {
+                currentUser = null;
+                document.getElementById('auth-overlay').style.display = 'flex';
+            }
+        });
+
+        // Load Data
+        async function loadCloudProfile() {
+            const snap = await getDoc(doc(db, "users", currentUser.uid));
+            if(snap.exists()) {
+                userProfile = { ...userProfile, ...snap.data() };
+            }
+        }
+
+        async function saveCloudProfile() {
+            await setDoc(doc(db, "users", currentUser.uid), userProfile, { merge: true });
+        }
+
+        async function loadCloudData() {
+            cloudData = [];
+            const querySnapshot = await getDocs(collection(db, "users", currentUser.uid, "logs"));
+            querySnapshot.forEach((doc) => { cloudData.push(doc.data()); });
+            
+            const todayStr = document.getElementById('log-date').value || new Date().toISOString().split('T')[0];
+            const todayLog = cloudData.find(d => d.date === todayStr);
+            if(todayLog) {
+                document.getElementById('steps').value = todayLog.steps || '';
+                document.getElementById('sleep').value = todayLog.sleep || '';
+                document.getElementById('water').value = todayLog.water || '';
+                document.getElementById('screen-time').value = todayLog.screenTime || '';
+                document.getElementById('bp-sys').value = todayLog.bpSys || '';
+                document.getElementById('bp-dia').value = todayLog.bpDia || '';
+                document.getElementById('notes').value = todayLog.notes || '';
+                if(todayLog.plate) currentPlate = todayLog.plate;
+                renderDailyPlateUI();
+            }
+        }
+
+        // --- Support Modal & Ticketing System ---
+        window.openSupportModal = () => document.getElementById('support-modal').classList.add('active');
+        window.closeSupportModal = () => document.getElementById('support-modal').classList.remove('active');
+
+        window.submitTicket = async () => {
+            const text = document.getElementById('bug-report-text').value;
+            if(!text) return alert("Please describe the issue first.");
+            
+            const tktId = '#TKT-' + Math.floor(Math.random() * 9000 + 1000);
+            
+            // Save to Firebase Database under the user's profile
+            await setDoc(doc(db, "users", currentUser.uid, "tickets", tktId), {
+                id: tktId, issue: text, timestamp: new Date().toISOString()
+            });
+
+            document.getElementById('ticket-form-area').style.display = 'none';
+            const successDiv = document.getElementById('ticket-success');
+            successDiv.innerText = `Ticket ${tktId} Submitted Successfully! Our admin team will look into it.`;
+            successDiv.style.display = 'block';
+        }
+
+        let adminClicks = 0;
+        window.adminTicketCheck = async () => {
+            adminClicks++;
+            if(adminClicks >= 5) {
+                adminClicks = 0;
+                const snap = await getDocs(collection(db, "users", currentUser.uid, "tickets"));
+                let tickets = [];
+                snap.forEach(doc => tickets.push(doc.data()));
+                console.table(tickets);
+                alert(`Admin Mode Triggered! Found ${tickets.length} tickets. Press F12 to check the Browser Console for the full list.`);
+            }
+        }
+
+        // --- Edamam Autocomplete & Custom Food Logic ---
+        let debounceTimer;
+        document.getElementById('food-search-input').addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const query = e.target.value;
+            const list = document.getElementById('autocomplete-list');
+            if(!query) { list.innerHTML = ''; return; }
+            
+            debounceTimer = setTimeout(async () => {
+                let html = '';
+                // Check Custom Foods First
+                const matchedCustom = userProfile.customFoods.filter(f => f.label.toLowerCase().includes(query.toLowerCase()));
+                matchedCustom.forEach(f => {
+                    html += `<div onclick="addFoodToPlate('${f.label.replace(/'/g, "\\'")}', ${f.calories})"><span>${f.label} <span class="custom-food-badge">Custom</span></span> <span>${f.calories} kcal</span></div>`;
+                });
+
+                // Fetch Edamam Autocomplete
+                try {
+                    const res = await fetch(`https://api.edamam.com/auto-complete?app_id=${EDAMAM_ID}&app_key=${EDAMAM_KEY}&q=${query}`);
+                    const data = await res.json(); 
+                    data.slice(0, 5).forEach(item => {
+                        html += `<div onclick="fetchExactFood('${item.replace(/'/g, "\\'")}')"><span>${item}</span> <span>🔍 Search</span></div>`;
+                    });
+                } catch(err) { console.error(err); }
+                
+                list.innerHTML = html;
+            }, 500);
+        });
+
+        window.fetchExactFood = async (query) => {
+            document.getElementById('autocomplete-list').innerHTML = '<div><i>Loading calories...</i></div>';
+            try {
+                const res = await fetch(`https://api.edamam.com/api/food-database/v2/parser?app_id=${EDAMAM_ID}&app_key=${EDAMAM_KEY}&ingr=${query}`);
+                const data = await res.json();
+                if(data.hints && data.hints.length > 0) {
+                    const food = data.hints[0].food;
+                    const cals = Math.round(food.nutrients.ENERC_KCAL);
+                    addFoodToPlate(food.label, cals);
+                } else { alert("Could not fetch calories for this item."); }
+            } catch(e) { alert("API Error"); }
+        };
+
+        window.toggleCustomFood = () => {
+            const box = document.getElementById('custom-food-box');
+            box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        }
+
+        window.saveCustomFood = async () => {
+            const label = document.getElementById('custom-food-name').value;
+            const calories = parseInt(document.getElementById('custom-food-cal').value);
+            if(!label || !calories) return alert("Enter name and calories");
+            
+            userProfile.customFoods.push({ label, calories });
+            await saveCloudProfile();
+            addFoodToPlate(label, calories);
+            
+            document.getElementById('custom-food-name').value = '';
+            document.getElementById('custom-food-cal').value = '';
+            toggleCustomFood();
+            alert("Custom Food Saved to Cloud!");
+        }
+
+        window.addFoodToPlate = (label, calories) => {
+            currentPlate.push({ label, calories, id: Date.now() });
+            document.getElementById('autocomplete-list').innerHTML = '';
+            document.getElementById('food-search-input').value = '';
+            renderDailyPlateUI();
+        };
+
+        window.removeFoodFromPlate = (id) => {
+            currentPlate = currentPlate.filter(item => item.id !== id);
+            renderDailyPlateUI();
+        }
+
+        function renderDailyPlateUI() {
+            const list = document.getElementById('daily-plate-list');
+            let totalCals = 0;
+            if(currentPlate.length === 0) list.innerHTML = "(No food added yet)";
+            else {
+                list.innerHTML = currentPlate.map(item => {
+                    totalCals += item.calories;
+                    return `<div style="display:flex; justify-content:space-between; padding:4px; border-bottom:1px solid #eee;"><span>${item.label} (${item.calories} kcal)</span><span style="color:red; cursor:pointer;" onclick="removeFoodFromPlate(${item.id})">❌</span></div>`;
+                }).join('');
+            }
+            document.getElementById('plate-calories').innerText = totalCals;
+        }
+
+        // ==========================================
+        // UI & CORE DASHBOARD LOGIC
+        // ==========================================
+        const logDateInput = document.getElementById('log-date');
+        const healthForm = document.getElementById('health-form');
+        let stepsChartVar, sleepChartVar, bpChartVar;
+        let currentTimeframe = 7; 
+        
+        const loadGoals = () => JSON.parse(localStorage.getItem('healthGoals')) || { steps: 10000, sleep: 8, water: 2.5 };
+        const saveGoals = (goals) => localStorage.setItem('healthGoals', JSON.stringify(goals));
+
+        // Full 13 Badges Dictionary
+        const BADGE_DEFS = {
+            'sprout': { icon: '🌱', name: 'The Sprout', desc: 'Logged your very first day.' },
+            'fire': { icon: '🔥', name: 'On Fire', desc: '3-day logging streak.' },
+            'habit': { icon: '🗓️', name: 'Habit Builder', desc: '7-day logging streak.' },
+            'month': { icon: '🥉', name: 'Monthly Master', desc: '30-day logging streak.' },
+            'halfyear': { icon: '🥈', name: 'Half-Year Hero', desc: '180-day logging streak.' },
+            'year': { icon: '🥇', name: 'Health Legend', desc: '365-day logging streak.' },
+            'marathon': { icon: '🏃‍♂️', name: 'The Marathoner', desc: '15,000+ steps in a single day.' },
+            'hydration': { icon: '🌊', name: 'Hydration Hero', desc: 'Hit 120% of your water goal.' },
+            'zen': { icon: '🧘‍♂️', name: 'Zen Master', desc: 'Great mood + Normal BP reading.' },
+            'stepup': { icon: '👟', name: 'Stepping Up', desc: 'Hit step goal 3 days in a row.' },
+            'sleepy': { icon: '💤', name: 'Sleeping Beauty', desc: 'Hit sleep goal 3 days in a row.' },
+            'camel': { icon: '🐫', name: 'The Camel', desc: 'Hit water goal 3 days in a row.' },
+            'trifecta': { icon: '👑', name: 'The Trifecta', desc: 'Hit Steps, Sleep & Water goals!' }
+        };
+
+        const initPage = () => {
+            if(!logDateInput.value) logDateInput.valueAsDate = new Date(); 
+            const goals = loadGoals();
+            document.getElementById('goal-steps').value = goals.steps;
+            document.getElementById('goal-sleep').value = goals.sleep;
+            document.getElementById('goal-water').value = goals.water;
+            
+            // Load from Cloud Profile
+            if(userProfile.age) document.getElementById('user-age').value = userProfile.age;
+            if(userProfile.weight) document.getElementById('user-weight').value = userProfile.weight;
+            if(userProfile.height) document.getElementById('user-height').value = userProfile.height;
+            if(userProfile.weight && userProfile.height) { calculateBMI(true); }
+
+            updatePage(); 
+        };
+
+        const updatePage = () => { renderLogs(); updateCharts(); runAI_Insights(); renderTrophyRoom(); };
+
+        window.setTimeframe = (days) => {
+            currentTimeframe = days;
+            document.getElementById('btn-7days').classList.remove('active');
+            document.getElementById('btn-30days').classList.remove('active');
+            if(days === 7) document.getElementById('btn-7days').classList.add('active');
+            if(days === 30) document.getElementById('btn-30days').classList.add('active');
+            updateCharts();
+        };
+
+        const renderTrophyRoom = () => {
+            const grid = document.getElementById('badge-grid');
+            const unlocked = userProfile.unlockedBadges || [];
+            grid.innerHTML = '';
+            for (const [id, badge] of Object.entries(BADGE_DEFS)) {
+                const isUnlocked = unlocked.includes(id);
+                grid.innerHTML += `<div class="badge-item ${isUnlocked ? 'unlocked' : ''}"><span class="badge-icon">${badge.icon}</span><div class="badge-title">${badge.name}</div><div class="badge-desc">${badge.desc}</div></div>`;
+            }
+        };
+
+        const showToast = (badge) => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<div class="toast-icon">${badge.icon}</div><div class="toast-text"><h4>Achievement Unlocked!</h4><p>You earned the <b>${badge.name}</b> badge.</p></div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 5000); 
+        };
+
+        function calculateStreak(data) {
+            if(!data || data.length === 0) return 0;
+            let sorted = [...data].sort((a,b) => new Date(b.date) - new Date(a.date));
+            let today = new Date().toISOString().split('T')[0];
+            let latestDate = sorted[0].date;
+            let diffDaysFromToday = Math.floor((new Date(today) - new Date(latestDate)) / (1000 * 60 * 60 * 24));
+            if (diffDaysFromToday > 1) return 0; 
+
+            let streak = 1;
+            for(let i=0; i < sorted.length - 1; i++) {
+                let d1 = new Date(sorted[i].date); 
+                let d2 = new Date(sorted[i+1].date);
+                let diff = Math.floor((d1 - d2) / (1000 * 60 * 60 * 24));
+                if(diff === 1) streak++; 
+                else if (diff === 0) continue; 
+                else break;
+            }
+            return streak;
+        }
+
+        const evaluateAchievements = async (entry, goals, allData) => {
+            let currentBadges = userProfile.unlockedBadges || [];
+            let streak = calculateStreak(allData);
+            document.getElementById('streak-display').innerText = `🔥 ${streak}-Day Streak!`;
+
+            const unlock = (id) => { if (!currentBadges.includes(id)) { currentBadges.push(id); showToast(BADGE_DEFS[id]); } };
+            
+            if (allData.length >= 1) unlock('sprout');
+            if (streak >= 3) unlock('fire');
+            if (streak >= 7) unlock('habit');
+            if (streak >= 30) unlock('month');
+            if (streak >= 180) unlock('halfyear');
+            if (streak >= 365) unlock('year');
+
+            if (entry.steps >= 15000) unlock('marathon');
+            if (entry.water >= (goals.water * 1.2)) unlock('hydration');
+            if (['🙂', '😄'].includes(entry.mood) && entry.bpSys < 120 && entry.bpDia < 80) unlock('zen');
+            if (entry.steps >= goals.steps && entry.sleep >= goals.sleep && entry.water >= goals.water) unlock('trifecta');
+
+            if (allData.length >= 3) {
+                const last3 = allData.slice(0, 3);
+                if (last3.every(d => d.steps >= goals.steps)) unlock('stepup');
+                if (last3.every(d => d.sleep >= goals.sleep)) unlock('sleepy');
+                if (last3.every(d => d.water >= goals.water)) unlock('camel');
+            }
+
+            userProfile.unlockedBadges = currentBadges;
+            await saveCloudProfile();
+        };
+
+        healthForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let totalPlateCals = currentPlate.reduce((sum, item) => sum + item.calories, 0);
+
+            const entry = {
+                date: logDateInput.value,
+                steps: parseFloat(document.getElementById('steps').value),
+                sleep: parseFloat(document.getElementById('sleep').value),
+                water: parseFloat(document.getElementById('water').value),
+                screenTime: parseFloat(document.getElementById('screen-time').value) || 0,
+                bpSys: parseFloat(document.getElementById('bp-sys').value) || null,
+                bpDia: parseFloat(document.getElementById('bp-dia').value) || null,
+                mood: document.getElementById('mood-input').value,
+                notes: document.getElementById('notes').value,
+                plate: currentPlate, totalCalories: totalPlateCals
+            };
+            
+            await setDoc(doc(db, "users", currentUser.uid, "logs", entry.date), entry, { merge: true });
+            
+            const idx = cloudData.findIndex(d => d.date === entry.date);
+            if (idx > -1) cloudData[idx] = entry; else cloudData.push(entry);
+            cloudData = cloudData.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            const goals = loadGoals();
+            await evaluateAchievements(entry, goals, cloudData);
+            generateAdvice(entry, goals); 
+            updatePage();
+            alert("Log saved successfully to Cloud!");
+        });
+
+        const generateAdvice = (entry, goals) => {
+            const dataSorted = [...cloudData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const prevEntry = dataSorted.length > 1 ? dataSorted[1] : null;
+            let html = '<h4>💡 Your Dynamic Daily Insights:</h4><ul style="padding-left: 20px;">';
+
+            // Steps
+            let sDiff = prevEntry ? entry.steps - prevEntry.steps : 0;
+            let sComp = prevEntry ? (sDiff >= 0 ? `That's an extra ${sDiff} steps compared to yesterday—way to keep the momentum going!` : `You're ${Math.abs(sDiff)} steps behind yesterday's pace. Don't sweat it, a quick walk now can fix that!`) : "Welcome to day one! You're laying the foundation for a healthier version of yourself.";
+            html += `<li><b>Steps:</b> You hit ${entry.steps} steps. ${entry.steps >= goals.steps ? "Goal crushed!" : "Almost there!"} ${sComp}</li>`;
+
+            // Sleep
+            let slDiff = prevEntry ? (entry.sleep - prevEntry.sleep).toFixed(1) : 0;
+            let slComp = prevEntry ? (slDiff >= 0 ? `You got ${slDiff} more hours of rest than last night. Your brain is going to feel much sharper today!` : `You slept ${Math.abs(slDiff)} hours less than yesterday. Try to prioritize an early bedtime tonight to recharge.`) : "Track your sleep daily to see how much energy you truly gain from a full night's rest.";
+            html += `<li><b>Sleep:</b> ${entry.sleep}h logged. ${entry.sleep >= goals.sleep ? "Perfect recovery!" : "A bit short today."} ${slComp}</li>`;
+
+            // Water
+            let wDiff = prevEntry ? (entry.water - prevEntry.water).toFixed(1) : 0;
+            html += `<li><b>Water:</b> ${entry.water}L drunk. ${prevEntry && wDiff > 0 ? "You're more hydrated than yesterday!" : "Grab a glass now to beat your previous record!"} Staying hydrated is the secret to great skin and high energy.</li>`;
+
+            // Calories
+            let cDiff = prevEntry ? (entry.totalCalories - prevEntry.totalCalories) : 0;
+            html += `<li><b>Food:</b> You consumed ${entry.totalCalories} kcal. ${prevEntry ? `That's ${cDiff >= 0 ? 'more' : 'less'} than yesterday.` : "Start adding your meals to see your nutritional patterns emerge!"} Quality fuel leads to quality performance.</li>`;
+
+            // Screen Time
+            if (entry.screenTime > 0) {
+                html += `<li><b>Screen Time:</b> ${entry.screenTime}h logged. ${entry.screenTime > 6 ? "That's a lot of blue light!" : "Great digital balance."} Try the 20-20-20 rule tomorrow to keep your eyes feeling fresh.</li>`;
+            }
+
+            // BP & Mood
+            if (entry.bpSys) html += `<li><b>Vitality:</b> Your BP is ${entry.bpSys}/${entry.bpDia}. Regular tracking helps us notice your stress triggers before they become an issue!</li>`;
+            if (entry.mood) html += `<li><b>Mindset:</b> You felt ${entry.mood} today. Identifying your mood helps you realize that your physical health and your feelings are always connected!</li>`;
+
+            const adviceBox = document.getElementById('log-advice-section');
+            adviceBox.innerHTML = html + '</ul>';
+            adviceBox.style.display = 'block';
+        };
+
+        const runAI_Insights = () => {
+            const data = cloudData; const adviceBox = document.getElementById('ai-insight-section');
+            if(data.length < 3) { adviceBox.innerHTML = "<p><i>📈 Log just a few more days! Once we have 3 logs, we'll start discovering the hidden rhythms of your life.</i></p>"; return; }
+            const goodMoods = data.filter(d => ['🙂', '😄'].includes(d.mood));
+            const badMoods = data.filter(d => ['😩', '😕'].includes(d.mood));
+            if(goodMoods.length === 0 || badMoods.length === 0) { adviceBox.innerHTML = "<p><i>📊 Try logging different moods! We love to see your happy days and your tough days to see what makes them different.</i></p>"; return; }
+            
+            let avgSleepG = goodMoods.reduce((s, d) => s + (d.sleep||0), 0) / goodMoods.length;
+            let avgSleepB = badMoods.reduce((s, d) => s + (d.sleep||0), 0) / badMoods.length;
+            
+            let html = "<ul style='padding-left: 20px;'>";
+            if(avgSleepG > avgSleepB + 0.5) html += `<li>💤 <b>Sleep = Happiness!</b> We've noticed that on your best days, you sleep about ${avgSleepG.toFixed(1)}h, compared to ${avgSleepB.toFixed(1)}h on tougher days. Prioritizing rest is your superpower!</li>`;
+            else html += `<li>🌱 We're currently watching your habits like a friend would. Keep logging, and we'll let you know the moment we find a connection between your routine and your mood!</li>`;
+            adviceBox.innerHTML = html + "</ul>";
+        };
+
+        window.suggestGoals = async () => {
+            const age = parseInt(document.getElementById('user-age').value);
+            if(!age || age <= 0) return;
+            userProfile.age = age; await saveCloudProfile();
+            
+            let html = `👋 <b>Welcome!</b> Since you are ${age} years old, here is a friendly guide for your body:<br><br>`;
+            
+            if(age < 18) {
+                html += `<b>👟 Movement:</b> Aim for around 12,000 steps. Your body is still growing, and staying highly active builds a strong foundation!<br>`;
+                html += `<b>💤 Rest:</b> Try to get 9 hours of sleep. Your brain needs extra time to process all that studying and growth.<br>`;
+                html += `<b>💧 Hydration:</b> Drink at least 2.0 Liters of water daily to keep your energy up.`;
+                document.getElementById('goal-steps').value = 12000; document.getElementById('goal-sleep').value = 9; document.getElementById('goal-water').value = 2.0;
+            } else if (age >= 60) {
+                html += `<b>👟 Movement:</b> Aim for around 6,000 to 7,000 steps. Focus on joint health and consistent, light activity rather than strain.<br>`;
+                html += `<b>💤 Rest:</b> Aim for 7 to 8 hours. Quality of sleep is more important than duration right now!<br>`;
+                html += `<b>💧 Hydration:</b> Drink around 2.5 Liters. It's easy to forget to drink water, so keep a bottle handy.`;
+                document.getElementById('goal-steps').value = 6000; document.getElementById('goal-sleep').value = 7.5; document.getElementById('goal-water').value = 2.5;
+            } else {
+                html += `<b>👟 Movement:</b> Aim for 10,000 steps. This is the sweet spot for maintaining cardiovascular health during your busy days.<br>`;
+                html += `<b>💤 Rest:</b> Try to get 8 solid hours of sleep to fully repair your muscles and clear mental fog.<br>`;
+                html += `<b>💧 Hydration:</b> Drink 3.0 Liters of water to keep your metabolism running perfectly.`;
+                document.getElementById('goal-steps').value = 10000; document.getElementById('goal-sleep').value = 8; document.getElementById('goal-water').value = 3.0;
+            }
+            
+            document.getElementById('goal-advice-section').innerHTML = html;
+            document.getElementById('goal-advice-section').style.display = 'block';
+            saveGoals({ steps: document.getElementById('goal-steps').value, sleep: document.getElementById('goal-sleep').value, water: document.getElementById('goal-water').value });
+        };
+
+        window.generateDietPlan = () => {
+            const age = parseInt(document.getElementById('user-age').value) || 25;
+            const weight = parseFloat(document.getElementById('user-weight').value) || 70;
+            const height = parseFloat(document.getElementById('user-height').value) || 170;
+            const steps = loadGoals().steps;
+            
+            // Formula: Mifflin-St Jeor BMR * Activity Multiplier
+            let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+            let multiplier = steps >= 12000 ? 1.725 : steps >= 7500 ? 1.55 : steps >= 5000 ? 1.375 : 1.2;
+            let targetCals = Math.round(bmr * multiplier);
+            
+            let cat = "", suggestions = "";
+            // AGE BUCKETS: Under 30 | 30-50 | 50+
+            // ACTIVITY BUCKETS: <5k | 5k-7.5k | 7.5k-12k | 12k+
+            if (age < 30) {
+                if (steps < 5000) { cat = "Fresh Start"; suggestions = "Keep it light with <b>Sprouts</b> and a fresh <b>Apple</b> to keep your metabolism awake while you rest."; }
+                else if (steps < 7500) { cat = "Daily Drive"; suggestions = "Fuel that movement with <b>Poha</b> or <b>Oats</b>. They provide steady energy without the heavy crash later."; }
+                else if (steps < 12000) { cat = "Power Youth"; suggestions = "You're moving fast! Rebuild with <b>Bananas</b> and <b>Boiled Eggs</b>—the classic fuels for an active body."; }
+                else { cat = "Elite Athlete"; suggestions = "Massive burn! You need <b>Sweet Potatoes</b> for energy and <b>Chicken/Paneer</b> to repair those hard-working muscles."; }
+            } else if (age < 50) {
+                if (steps < 5000) { cat = "Light Balance"; suggestions = "Focus on internal health. <b>Green Tea</b> and a bowl of <b>Vegetable Soup</b> will keep you feeling light and focused."; }
+                else if (steps < 7500) { cat = "Wholesome Adult"; suggestions = "Balance your day with <b>Brown Rice</b> and <b>Lentils (Dal)</b>. It's the perfect combo for sustained work energy."; }
+                else if (steps < 12000) { cat = "Heart Hero"; suggestions = "Support your heart! Snack on <b>Almonds</b> and enjoy <b>Grilled Fish or Tofu</b> to keep your stamina high."; }
+                else { cat = "Iron Stamina"; suggestions = "Incredible work! Rely on <b>Quinoa or Daliya</b> and <b>Walnuts</b> to support your joints during this high activity."; }
+            } else {
+                if (steps < 5000) { cat = "Gentle Care"; suggestions = "Prioritize your gut! <b>Curd (Yogurt)</b> and ripe <b>Papaya</b> are easy on the stomach and rich in nutrients."; }
+                else if (steps < 7500) { cat = "Vibrant Vitality"; suggestions = "Keep your bones strong! A warm bowl of <b>Khichdi</b> with <b>Spinach</b> is your best friend today."; }
+                else if (steps < 12000) { cat = "Agile Golden"; suggestions = "Inspiring movement! Incorporate <b>Ragi</b> and <b>Eggs</b> to protect your muscle mass and bone density."; }
+                else { cat = "Golden Marathoner"; suggestions = "Legendary! Rehydrate with <b>Coconut Water</b> and recover with easily digestible <b>Moong Dal</b>."; }
+            }
+
+            document.getElementById('diet-advice-section').innerHTML = `
+                <div style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border:1px solid var(--sky-accent);">
+                    <h4 style="margin:0;">🔥 Target: ${targetCals} kcal</h4>
+                    <p style="font-size:0.8rem; color:#666;">Based on your unique BMI and activity.</p>
+                </div>
+                <h4 style="color:var(--success-color);">🍽️ ${cat} Focus</h4>
+                <p>${suggestions}</p>`;
+            document.getElementById('diet-advice-section').style.display = 'block';
+        };
+
+        window.calculateBMI = async (isInitialLoad = false) => {
+            const weight = parseFloat(document.getElementById('user-weight').value);
+            const height = parseFloat(document.getElementById('user-height').value);
+            if(!weight || !height) return;
+
+            if(!isInitialLoad) {
+                userProfile.weight = weight; userProfile.height = height;
+                await saveCloudProfile();
+            }
+            const bmi = (weight / ((height/100) * (height/100))).toFixed(1);
+            const bmiNum = parseFloat(bmi);
+
+            let color, label, emoji, isHealthy;
+            if (bmiNum < 18.5) {
+                color = '#f59e0b'; label = 'Underweight'; emoji = '⚠️'; isHealthy = false;
+            } else if (bmiNum <= 24.9) {
+                color = '#10b981'; label = 'Healthy ✅';  emoji = '🎉'; isHealthy = true;
+            } else if (bmiNum <= 29.9) {
+                color = '#ef4444'; label = 'Overweight';  emoji = '⚠️'; isHealthy = false;
+            } else {
+                color = '#dc2626'; label = 'Obese';       emoji = '🚨'; isHealthy = false;
+            }
+
+            const resultBox = document.getElementById('bmi-result-section');
+            const bmiCard  = document.getElementById('bmi-card');
+
+            resultBox.innerHTML = `
+                <h4 style="margin:0 0 6px 0;">Your BMI:
+                    <span style="color:${color}; font-size:1.7rem; font-weight:800;">${bmi}</span>
+                </h4>
+                <div style="font-size:1rem; font-weight:700; color:${color}; margin-bottom:4px;">
+                    ${isHealthy ? '<span class="bmi-heart-icon">💚</span> ' : emoji + ' '}${label}
+                </div>
+                <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+                    Healthy range: 18.5 – 24.9
+                </div>`;
+            resultBox.style.display = 'block';
+
+            resultBox.classList.toggle('bmi-healthy', isHealthy);
+            bmiCard.classList.toggle('bmi-perfect-glow', isHealthy);
+
+            if (!isHealthy || isInitialLoad) return;
+
+            const rect = resultBox.getBoundingClientRect();
+            const cx = rect.left + rect.width  / 2;
+            const cy = rect.top  + rect.height / 2;
+
+            const STARS = ['✦','★','✶','✸','✺','⭐','🌟','💫','✨','⚡'];
+            const COLORS = ['#fbbf24','#10b981','#38b6e8','#f59e0b','#a78bfa','#34d399','#60a5fa','#fb7185'];
+            const COUNT  = 22;
+
+            const container = document.createElement('div');
+            container.className = 'star-burst-container';
+            document.body.appendChild(container);
+
+            for (let i = 0; i < COUNT; i++) {
+                const angle   = (360 / COUNT) * i + (Math.random() - 0.5) * 18;
+                const dist    = 90 + Math.random() * 180;
+                const rad     = angle * Math.PI / 180;
+                const tx      = Math.cos(rad) * dist;
+                const ty      = Math.sin(rad) * dist;
+                const rot     = (Math.random() - 0.5) * 540 + 'deg';
+                const dur     = (0.9 + Math.random() * 0.6).toFixed(2) + 's';
+                const delay   = (Math.random() * 0.18).toFixed(2) + 's';
+                const symbol  = STARS[Math.floor(Math.random() * STARS.length)];
+                const clr     = COLORS[Math.floor(Math.random() * COLORS.length)];
+                const size    = (1.1 + Math.random() * 1.4).toFixed(2);
+
+                const star = document.createElement('span');
+                star.className = 'star-particle';
+                star.textContent = symbol;
+                star.style.cssText = `
+                    left:${cx}px; top:${cy}px; color:${clr}; font-size:${size}rem;
+                    --tx:${tx}px; --ty:${ty}px; --rot:${rot}; --dur:${dur};
+                    animation-delay:${delay}; filter: drop-shadow(0 0 6px ${clr});
+                `;
+                container.appendChild(star);
+            }
+
+            setTimeout(() => container.remove(), 2000);
+
+            resultBox.style.position = 'relative';
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const ring = document.createElement('div');
+                    ring.className = 'heartbeat-ring';
+                    const size = 60;
+                    ring.style.cssText = `
+                        width:${size}px; height:${size}px; left:50%; top:50%;
+                        margin-left:-${size/2}px; margin-top:-${size/2}px;
+                    `;
+                    resultBox.appendChild(ring);
+                    setTimeout(() => ring.remove(), 950);
+                }, i * 320);
+            }
+        };
+
+        window.deleteLog = (date) => { 
+            if(confirm("Delete this log? Note: In this demo it hides it locally.")) { 
+                cloudData = cloudData.filter(l => l.date !== date); 
+                updatePage(); 
+            } 
+        };
+        window.toggleMenu = () => { document.getElementById("mySidebar").classList.toggle("open"); document.getElementById("overlay").classList.toggle("active"); };
+
+        const updateCharts = () => {
+            const data = [...cloudData].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const recentData = data.slice(-currentTimeframe);
+            
+            document.getElementById('avg-title-steps').innerText = `${currentTimeframe}-Day Avg Steps`;
+            document.getElementById('avg-title-sleep').innerText = `${currentTimeframe}-Day Avg Sleep`;
+            if(recentData.length > 0) {
+                const avgSteps = Math.round(recentData.reduce((s, d) => s + (d.steps||0), 0) / recentData.length);
+                const avgSleep = (recentData.reduce((s, d) => s + (d.sleep||0), 0) / recentData.length).toFixed(1);
+                document.getElementById('avg-val-steps').innerText = avgSteps;
+                document.getElementById('avg-val-sleep').innerText = `${avgSleep}h`;
+            }
+
+            const shadowPlugin = {
+                id: 'barShadow',
+                beforeDraw(chart) {
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    chart.data.datasets.forEach((ds, di) => {
+                        const meta = chart.getDatasetMeta(di);
+                        if (!meta.visible) return;
+                        meta.data.forEach(el => {
+                            const { x, y, width, height, base } = el.getProps
+                                ? el.getProps(['x','y','width','height','base'], true)
+                                : { x: el.x, y: el.y, width: el.width, height: el.height, base: el.base };
+                            ctx.save();
+                            ctx.shadowColor = ds.shadowColor || 'rgba(14,165,233,0.55)';
+                            ctx.shadowBlur   = 22; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 8;
+                            if (chart.config.type === 'bar' && width) {
+                                ctx.fillStyle = ds.borderColor || ds.backgroundColor || 'rgba(14,165,233,0.5)';
+                                ctx.beginPath();
+                                const r = 10;
+                                const bx = x - width/2, by = Math.min(y, base ?? y);
+                                const bw = width, bh = Math.abs((base ?? y) - y);
+                                ctx.moveTo(bx + r, by); ctx.lineTo(bx + bw - r, by);
+                                ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+                                ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx, by + bh);
+                                ctx.lineTo(bx, by + r); ctx.quadraticCurveTo(bx, by, bx + r, by);
+                                ctx.closePath(); ctx.fill();
+                            }
+                            ctx.restore();
+                        });
+                    });
+                    ctx.restore();
+                }
+            };
+
+            const tooltipDefaults = {
+                backgroundColor: 'rgba(3,30,60,0.88)', titleColor: '#7dd3fc', bodyColor: '#e0f4ff', borderColor: 'rgba(14,165,233,0.5)',
+                borderWidth: 1, padding: 12, cornerRadius: 10, displayColors: true, titleFont: { size: 13, weight: '700' }, bodyFont:  { size: 12 }
+            };
+            const scaleDefaults = (yLabel) => ({
+                x: { grid: { color: 'rgba(14,165,233,0.08)', lineWidth: 1 }, ticks: { color: '#0369a1', font: { size: 11, weight: '600' } } },
+                y: { grid: { color: 'rgba(14,165,233,0.1)', lineWidth: 1 }, ticks: { color: '#0369a1', font: { size: 11, weight: '600' } }, title: { display: !!yLabel, text: yLabel, color: '#0ea5e9', font: { size: 12, weight: '700' } }, beginAtZero: true }
+            });
+
+            if (stepsChartVar) stepsChartVar.destroy();
+            {
+                const ctx2d = document.getElementById('stepsChart').getContext('2d');
+                const grad = ctx2d.createLinearGradient(0, 0, 0, 320);
+                grad.addColorStop(0,   'rgba(3,  105,161,0.95)'); grad.addColorStop(0.5, 'rgba(14, 165,233,0.82)'); grad.addColorStop(1,   'rgba(125,211,252,0.65)');
+                stepsChartVar = new Chart(ctx2d, {
+                    type: 'bar', plugins: [shadowPlugin],
+                    data: { labels: recentData.map(l => l.date), datasets: [{ label: 'Steps', data: recentData.map(l => l.steps), backgroundColor: grad, borderColor: '#0ea5e9', borderWidth: 2, borderRadius: 10, borderSkipped: false, shadowColor: 'rgba(14,165,233,0.6)', hoverBackgroundColor: 'rgba(14,165,233,0.95)', hoverBorderColor: '#7dd3fc', hoverBorderWidth: 3 }] },
+                    options: { responsive: true, animation: { duration: 1000, easing: 'easeOutBounce' }, plugins: { legend: { labels: { color: '#0369a1', font: { weight: '700' } } }, tooltip: tooltipDefaults }, scales: scaleDefaults('Steps') }
+                });
+            }
+
+            if (sleepChartVar) sleepChartVar.destroy();
+            {
+                const ctx2d = document.getElementById('sleepChart').getContext('2d');
+                const grad = ctx2d.createLinearGradient(0, 0, 0, 280);
+                grad.addColorStop(0,   'rgba(245,158, 11,0.95)'); grad.addColorStop(0.5, 'rgba(251,191, 36,0.80)'); grad.addColorStop(1,   'rgba(253,230, 138,0.55)');
+                sleepChartVar = new Chart(ctx2d, {
+                    type: 'bar', plugins: [shadowPlugin],
+                    data: { labels: recentData.map(l => l.date), datasets: [{ label: 'Sleep (h)', data: recentData.map(l => l.sleep), backgroundColor: grad, borderColor: '#f59e0b', borderWidth: 2, borderRadius: 10, borderSkipped: false, shadowColor: 'rgba(245,158,11,0.55)', hoverBackgroundColor: 'rgba(245,158,11,0.95)', hoverBorderColor: '#fde68a', hoverBorderWidth: 3 }] },
+                    options: { responsive: true, animation: { duration: 1000, easing: 'easeOutBounce' }, plugins: { legend: { labels: { color: '#78350f', font: { weight: '700' } } }, tooltip: { ...tooltipDefaults, titleColor: '#fde68a', bodyColor: '#fffbeb' } }, scales: scaleDefaults('Hours') }
+                });
+            }
+
+            const bpData = recentData.filter(d => d.bpSys && d.bpDia);
+            if (bpChartVar) bpChartVar.destroy();
+            {
+                const ctx2d = document.getElementById('bpChart').getContext('2d');
+                const sysGrad = ctx2d.createLinearGradient(0, 0, 0, 300);
+                sysGrad.addColorStop(0, 'rgba(239,68,68,0.25)'); sysGrad.addColorStop(1, 'rgba(239,68,68,0.0)');
+                const diaGrad = ctx2d.createLinearGradient(0, 0, 0, 300);
+                diaGrad.addColorStop(0, 'rgba(14,165,233,0.20)'); diaGrad.addColorStop(1, 'rgba(14,165,233,0.0)');
+                bpChartVar = new Chart(ctx2d, {
+                    type: 'line',
+                    data: { labels: bpData.map(l => l.date), datasets: [
+                            { label: 'Systolic', data: bpData.map(l => l.bpSys), borderColor: '#ef4444', backgroundColor: sysGrad, borderWidth: 3, tension: 0.45, fill: true, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6, pointHoverRadius: 9, shadowColor: 'rgba(239,68,68,0.5)' },
+                            { label: 'Normal Sys (120)', data: bpData.map(() => 120), borderColor: '#10b981', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false, tension: 0 },
+                            { label: 'Diastolic', data: bpData.map(l => l.bpDia), borderColor: '#0ea5e9', backgroundColor: diaGrad, borderWidth: 3, tension: 0.45, fill: true, pointBackgroundColor: '#0ea5e9', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6, pointHoverRadius: 9, shadowColor: 'rgba(14,165,233,0.5)' },
+                            { label: 'Normal Dia (80)', data: bpData.map(() => 80), borderColor: '#10b981', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false, tension: 0 }
+                        ] },
+                    options: { responsive: true, animation: { duration: 1200, easing: 'easeInOutCubic' }, plugins: { legend: { labels: { color: '#0369a1', font: { weight: '700' }, usePointStyle: true, pointStyleWidth: 16 } }, tooltip: { ...tooltipDefaults, mode: 'index', intersect: false } }, scales: scaleDefaults('mmHg'), interaction: { mode: 'index', intersect: false } }
+                });
+            }
+        };
+
+        const renderLogs = () => {
+            const data = [...cloudData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const tbody = document.getElementById('log-table-body'); tbody.innerHTML = '';
+            data.forEach(log => { 
+                const bp = log.bpSys ? `${log.bpSys}/${log.bpDia}` : '-'; 
+                const notes = log.notes ? log.notes.substring(0, 20) + '...' : '-';
+                tbody.innerHTML += `<tr><td><b>${log.date}</b></td><td>${log.steps}</td><td>${log.sleep}h</td><td>${log.water||0}L</td><td>${log.screenTime||0}h</td><td>${log.totalCalories||0}</td><td>${bp}</td><td>${notes}</td><td><button onclick="deleteLog('${log.date}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:4px;">Del</button></td></tr>`; 
+            });
+        };
+
+        document.getElementById('mood-selector').addEventListener('click', (e) => {
+            if(e.target.tagName==='BUTTON'){ document.querySelectorAll('.mood-selector button').forEach(b=>b.classList.remove('selected')); e.target.classList.add('selected'); document.getElementById('mood-input').value=e.target.dataset.mood; }
+        });
+        document.getElementById('steps').addEventListener('input', () => { const goals = loadGoals(); document.getElementById('steps-progress').style.width = Math.min((document.getElementById('steps').value/goals.steps)*100, 100)+'%'; });
+        document.getElementById('goals-form').addEventListener('input', () => saveGoals({ steps: document.getElementById('goal-steps').value, sleep: document.getElementById('goal-sleep').value, water: document.getElementById('goal-water').value }));
+
+        window.startDictation = () => {
+            if (window.hasOwnProperty('webkitSpeechRecognition')) {
+                const recognition = new webkitSpeechRecognition(); const btn = document.getElementById('mic-btn'); recognition.continuous = false; recognition.interimResults = false; recognition.lang = "en-US";
+                recognition.start(); btn.classList.add('listening'); btn.textContent = '👂 Listening...';
+                recognition.onresult = (e) => { document.getElementById('notes').value += e.results[0][0].transcript + " "; recognition.stop(); };
+                recognition.onerror = (e) => { alert("Microphone Error: " + e.error); recognition.stop(); }; recognition.onend = () => { btn.classList.remove('listening'); btn.textContent = '🎤 Record Note'; };
+            } else { alert("Sorry, your browser doesn't support Voice Notes. Try Google Chrome."); }
+        };
+
+        // --- Export Data to CSV (Excel Compatible) ---
+        window.exportToCSV = () => {
+            if (cloudData.length === 0) return alert("No history found to export yet!");
+
+            // 1. Define Column Headers
+            const headers = ["Date", "Steps", "Sleep_Hours", "Water_Liters", "Screen_Hours", "Calories", "BP_Systolic", "BP_Diastolic", "Mood", "Notes"];
+            
+            // 2. Map Cloud Data into Rows
+            const rows = cloudData.map(log => [
+                log.date,
+                log.steps || 0,
+                log.sleep || 0,
+                log.water || 0,
+                log.screenTime || 0,
+                log.totalCalories || 0,
+                log.bpSys || "N/A",
+                log.bpDia || "N/A",
+                log.mood || "N/A",
+                `"${(log.notes || "").replace(/"/g, '""')}"` // Double quotes handle commas inside notes
+            ]);
+
+            // 3. Join headers and rows with commas and newlines
+            const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+
+            // 4. Trigger the Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `HealthyYou_Report_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+    </script>
+</body>
+</html>
